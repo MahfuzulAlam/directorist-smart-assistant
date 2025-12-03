@@ -113,6 +113,9 @@ final class Directorist_Smart_Assistant {
 
 		// Load Frontend
 		DirectoristSmartAssistant\Frontend\Enqueuer::get_instance();
+
+		// Load Vector Sync
+		DirectoristSmartAssistant\Vector\Vector_Sync::get_instance();
 	}
 }
 

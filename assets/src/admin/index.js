@@ -17,6 +17,7 @@ import './index.css';
  * Internal dependencies
  */
 import ChatAgentSetup from './components/ChatAgentSetup';
+import VectorStorageSetup from './components/VectorStorageSetup';
 
 /**
  * Admin App Component
@@ -28,6 +29,15 @@ function AdminApp() {
 		system_prompt: '',
 		temperature: 0.7,
 		max_tokens: 1000,
+		// Vector storage settings
+		vector_api_base_url: '',
+		vector_api_secret_key: '',
+		vector_auto_sync: false,
+		vector_chunk_size: 500,
+		vector_chunk_overlap: 50,
+		vector_embedding_model: 'text-embedding-ada-002',
+		vector_index_name: 'directorist-listings',
+		vector_namespace: '',
 	});
 	const [loading, setLoading] = useState(true);
 	const [notice, setNotice] = useState(null);
@@ -98,12 +108,22 @@ function AdminApp() {
 						name: 'chat-agent',
 						title: 'Chat Agent Setup',
 					},
+					{
+						name: 'vector-storage',
+						title: 'Vector Storage',
+					},
 				]}
 			>
 				{(tab) => (
 					<div className="directorist-smart-assistant-tab-content">
 						{tab.name === 'chat-agent' && (
 							<ChatAgentSetup
+								settings={settings}
+								onSave={handleSave}
+							/>
+						)}
+						{tab.name === 'vector-storage' && (
+							<VectorStorageSetup
 								settings={settings}
 								onSave={handleSave}
 							/>

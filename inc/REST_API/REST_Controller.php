@@ -97,6 +97,49 @@ class REST_Controller {
 								return is_numeric( $param ) && $param > 0;
 							},
 						),
+						'vector_api_base_url' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'esc_url_raw',
+						),
+						'vector_api_secret_key' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'vector_auto_sync' => array(
+							'type'              => 'boolean',
+							'required'          => false,
+						),
+						'vector_chunk_size' => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'validate_callback' => function( $param ) {
+								return is_numeric( $param ) && $param >= 100 && $param <= 2000;
+							},
+						),
+						'vector_chunk_overlap' => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'validate_callback' => function( $param ) {
+								return is_numeric( $param ) && $param >= 0 && $param <= 200;
+							},
+						),
+						'vector_embedding_model' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'vector_index_name' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'vector_namespace' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
 					),
 				),
 			)
@@ -159,9 +202,12 @@ class REST_Controller {
 	public function get_settings( \WP_REST_Request $request ): \WP_REST_Response {
 		$settings = Settings_Manager::get_instance()->get_settings();
 
-		// Don't expose API key in response, only return masked version
+		// Don't expose API keys in response, only return masked versions
 		if ( ! empty( $settings['api_key'] ) ) {
 			$settings['api_key'] = 'sk-***';
+		}
+		if ( ! empty( $settings['vector_api_secret_key'] ) ) {
+			$settings['vector_api_secret_key'] = '***';
 		}
 
 		return new \WP_REST_Response( $settings, 200 );
@@ -183,6 +229,32 @@ class REST_Controller {
 			'temperature'   => isset( $params['temperature'] ) ? floatval( $params['temperature'] ) : 0.7,
 			'max_tokens'    => isset( $params['max_tokens'] ) ? intval( $params['max_tokens'] ) : 1000,
 		);
+
+		// Vector storage settings
+		if ( isset( $params['vector_api_base_url'] ) ) {
+			$settings['vector_api_base_url'] = esc_url_raw( $params['vector_api_base_url'] );
+		}
+		if ( isset( $params['vector_api_secret_key'] ) ) {
+			$settings['vector_api_secret_key'] = sanitize_text_field( $params['vector_api_secret_key'] );
+		}
+		if ( isset( $params['vector_auto_sync'] ) ) {
+			$settings['vector_auto_sync'] = (bool) $params['vector_auto_sync'];
+		}
+		if ( isset( $params['vector_chunk_size'] ) ) {
+			$settings['vector_chunk_size'] = intval( $params['vector_chunk_size'] );
+		}
+		if ( isset( $params['vector_chunk_overlap'] ) ) {
+			$settings['vector_chunk_overlap'] = intval( $params['vector_chunk_overlap'] );
+		}
+		if ( isset( $params['vector_embedding_model'] ) ) {
+			$settings['vector_embedding_model'] = sanitize_text_field( $params['vector_embedding_model'] );
+		}
+		if ( isset( $params['vector_index_name'] ) ) {
+			$settings['vector_index_name'] = sanitize_text_field( $params['vector_index_name'] );
+		}
+		if ( isset( $params['vector_namespace'] ) ) {
+			$settings['vector_namespace'] = sanitize_text_field( $params['vector_namespace'] );
+		}
 
 		// Settings Manager handles API key encryption and preservation logic
 		Settings_Manager::get_instance()->save_settings( $settings );

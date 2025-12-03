@@ -57,6 +57,15 @@ class Settings_Manager {
 			'system_prompt' => 'You are a helpful assistant for a business directory website. Answer questions about the listings available on this site.',
 			'temperature'   => 0.7,
 			'max_tokens'    => 1000,
+			// Vector storage defaults
+			'vector_api_base_url'   => '',
+			'vector_api_secret_key'  => '',
+			'vector_auto_sync'       => false,
+			'vector_chunk_size'      => 500,
+			'vector_chunk_overlap'   => 50,
+			'vector_embedding_model' => 'text-embedding-ada-002',
+			'vector_index_name'     => 'directorist-listings',
+			'vector_namespace'       => '',
 		);
 
 		$settings = get_option( $this->option_name, array() );
@@ -88,6 +97,24 @@ class Settings_Manager {
 			// If API key is not provided, preserve existing
 			$settings['api_key'] = $current_settings['api_key'] ?? '';
 		}
+
+		// Handle vector API secret key encryption
+		if ( isset( $settings['vector_api_secret_key'] ) ) {
+			// If secret key is empty or masked, preserve existing encrypted key
+			if ( empty( $settings['vector_api_secret_key'] ) || strpos( $settings['vector_api_secret_key'], '***' ) !== false ) {
+				$settings['vector_api_secret_key'] = $current_settings['vector_api_secret_key'] ?? '';
+			}
+			// Encrypt the secret key if it's new (not already encrypted)
+			elseif ( ! empty( $settings['vector_api_secret_key'] ) ) {
+				$settings['vector_api_secret_key'] = $this->encrypt_api_key( $settings['vector_api_secret_key'] );
+			}
+		} else {
+			// If secret key is not provided, preserve existing
+			$settings['vector_api_secret_key'] = $current_settings['vector_api_secret_key'] ?? '';
+		}
+
+		// Merge with existing settings to preserve all fields
+		$settings = wp_parse_args( $settings, $current_settings );
 
 		return update_option( $this->option_name, $settings );
 	}

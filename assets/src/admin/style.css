@@ -345,3 +345,284 @@
 	color: #667eea;
 	font-size: 14px;
 }
+
+/* Vector Storage Setup Styles */
+.vector-storage-setup {
+	background: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 12px;
+	padding: 0;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+	overflow: hidden;
+}
+
+.vector-storage-setup__section {
+	padding: 32px;
+	border-bottom: 1.5px solid #e5e7eb;
+}
+
+.vector-storage-setup__section:last-of-type {
+	border-bottom: none;
+}
+
+.vector-storage-setup__section h2 {
+	margin: 0 0 8px 0;
+	padding: 0;
+	border: none;
+	font-size: 20px;
+	font-weight: 700;
+	color: #111827;
+	letter-spacing: -0.5px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.vector-storage-setup__section h2::before {
+	content: '';
+	width: 4px;
+	height: 24px;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	border-radius: 2px;
+}
+
+.vector-storage-setup__section > p {
+	margin: 0 0 32px 0;
+	color: #6b7280;
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+.vector-storage-setup__field {
+	margin-bottom: 28px;
+	position: relative;
+}
+
+.vector-storage-setup__field:last-of-type {
+	margin-bottom: 0;
+}
+
+.vector-storage-setup__field label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 600;
+	font-size: 14px;
+	color: #374151;
+	letter-spacing: -0.2px;
+}
+
+.vector-storage-setup__field .components-base-control__label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 600;
+	font-size: 14px;
+	color: #374151;
+	letter-spacing: -0.2px;
+}
+
+.vector-storage-setup__field .components-text-control__input,
+.vector-storage-setup__field .components-textarea-control__input {
+	border: 1.5px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 10px 14px;
+	font-size: 14px;
+	transition: all 0.2s ease;
+	background: #ffffff;
+}
+
+.vector-storage-setup__field .components-text-control__input:focus,
+.vector-storage-setup__field .components-textarea-control__input:focus {
+	border-color: #667eea;
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+	outline: none;
+}
+
+.vector-storage-setup__field .components-base-control__help {
+	margin-top: 6px;
+	font-size: 13px;
+	color: #6b7280;
+	line-height: 1.5;
+	font-style: normal;
+}
+
+.vector-storage-setup__field .description {
+	margin-top: 8px;
+	font-style: normal;
+	color: #6b7280;
+	font-size: 13px;
+	line-height: 1.6;
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+}
+
+.vector-storage-setup__field .description::before {
+	content: 'ℹ️';
+	font-size: 14px;
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+.vector-storage-setup__field-api-url {
+	background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+	padding: 20px;
+	border-radius: 10px;
+	border: 1.5px solid #bae6fd;
+	margin-bottom: 28px;
+}
+
+.vector-storage-setup__field-api-url label {
+	color: #0369a1;
+}
+
+.vector-storage-setup__field-api-url .components-text-control__input {
+	background: #ffffff;
+	border-color: #7dd3fc;
+}
+
+.vector-storage-setup__field-api-url .components-text-control__input:focus {
+	border-color: #667eea;
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.vector-storage-setup__field-secret-key {
+	background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+	padding: 20px;
+	border-radius: 10px;
+	border: 1.5px solid #fcd34d;
+	margin-bottom: 28px;
+}
+
+.vector-storage-setup__field-secret-key label {
+	color: #92400e;
+}
+
+.vector-storage-setup__field-secret-key .components-text-control__input {
+	background: #ffffff;
+	border-color: #fbbf24;
+}
+
+.vector-storage-setup__field-secret-key .components-text-control__input:focus {
+	border-color: #667eea;
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.vector-storage-setup__field-secret-key .components-button {
+	border-radius: 8px;
+	font-weight: 600;
+	height: 40px;
+	padding: 0 16px;
+	transition: all 0.2s ease;
+}
+
+.vector-storage-setup__field-secret-key .components-button:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.vector-storage-setup__field .components-toggle-control {
+	margin-bottom: 0;
+}
+
+.vector-storage-setup__field .components-toggle-control__label {
+	font-weight: 600;
+	font-size: 14px;
+	color: #374151;
+}
+
+.vector-storage-setup__field .components-toggle-control__help {
+	margin-top: 8px;
+	font-size: 13px;
+	color: #6b7280;
+}
+
+.vector-storage-setup__field-group {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 24px;
+	margin-bottom: 28px;
+}
+
+@media (max-width: 782px) {
+	.vector-storage-setup__field-group {
+		grid-template-columns: 1fr;
+	}
+}
+
+.vector-storage-setup__actions {
+	margin-top: 40px;
+	padding-top: 24px;
+	border-top: 1.5px solid #e5e7eb;
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+}
+
+.vector-storage-setup__actions .components-button {
+	padding: 10px 24px;
+	font-size: 14px;
+	font-weight: 600;
+	border-radius: 8px;
+	height: auto;
+	min-height: 42px;
+	transition: all 0.2s ease;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.vector-storage-setup__actions .components-button.is-primary {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	border: none;
+	color: #ffffff;
+}
+
+.vector-storage-setup__actions .components-button.is-primary:hover:not(:disabled) {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.vector-storage-setup__actions .components-button.is-primary:active:not(:disabled) {
+	transform: translateY(0);
+}
+
+.vector-storage-setup__actions .components-button.is-primary:disabled {
+	background: #d1d5db;
+	opacity: 0.7;
+	cursor: not-allowed;
+}
+
+.vector-storage-setup__actions .components-button.is-primary.is-busy {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	opacity: 0.8;
+}
+
+.vector-storage-setup__actions .components-button.is-secondary {
+	background: #ffffff;
+	border: 1.5px solid #e5e7eb;
+	color: #374151;
+}
+
+.vector-storage-setup__actions .components-button.is-secondary:hover:not(:disabled) {
+	background: #f9fafb;
+	border-color: #d1d5db;
+	transform: translateY(-1px);
+}
+
+.vector-storage-setup__actions .components-button.is-secondary:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+	.vector-storage-setup__section {
+		padding: 24px 20px;
+	}
+
+	.vector-storage-setup__actions {
+		flex-direction: column;
+	}
+
+	.vector-storage-setup__actions .components-button {
+		width: 100%;
+	}
+}

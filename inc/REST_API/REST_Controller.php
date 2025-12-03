@@ -140,6 +140,19 @@ class REST_Controller {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
+						'chat_widget_position' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+							'validate_callback' => function( $param ) {
+								return in_array( $param, array( 'bottom-right', 'bottom-left' ), true );
+							},
+						),
+						'chat_widget_color' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_hex_color',
+						),
 					),
 				),
 			)
@@ -254,6 +267,14 @@ class REST_Controller {
 		}
 		if ( isset( $params['vector_namespace'] ) ) {
 			$settings['vector_namespace'] = sanitize_text_field( $params['vector_namespace'] );
+		}
+
+		// Chat module settings
+		if ( isset( $params['chat_widget_position'] ) ) {
+			$settings['chat_widget_position'] = sanitize_text_field( $params['chat_widget_position'] );
+		}
+		if ( isset( $params['chat_widget_color'] ) ) {
+			$settings['chat_widget_color'] = sanitize_text_field( $params['chat_widget_color'] );
 		}
 
 		// Settings Manager handles API key encryption and preservation logic

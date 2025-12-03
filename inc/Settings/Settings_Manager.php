@@ -66,6 +66,9 @@ class Settings_Manager {
 			'vector_embedding_model' => 'text-embedding-ada-002',
 			'vector_index_name'     => 'directorist-listings',
 			'vector_namespace'       => '',
+			// Chat module settings
+			'chat_widget_position'   => 'bottom-right',
+			'chat_widget_color'      => '#667eea',
 		);
 
 		$settings = get_option( $this->option_name, array() );

@@ -68,6 +68,9 @@ class Enqueuer {
 			$asset_file['version'] ?? DIRECTORIST_SMART_ASSISTANT_VERSION
 		);
 
+		// Get chat widget settings
+		$settings = \DirectoristSmartAssistant\Settings\Settings_Manager::get_instance()->get_settings();
+
 		// Localize script
 		wp_localize_script(
 			'directorist-smart-assistant-chat-widget',
@@ -75,6 +78,10 @@ class Enqueuer {
 			array(
 				'apiUrl' => rest_url( 'directorist-smart-assistant/v1/' ),
 				'nonce'  => wp_create_nonce( 'wp_rest' ),
+				'settings' => array(
+					'position' => $settings['chat_widget_position'] ?? 'bottom-right',
+					'color'    => $settings['chat_widget_color'] ?? '#667eea',
+				),
 			)
 		);
 	}

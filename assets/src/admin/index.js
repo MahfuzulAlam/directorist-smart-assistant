@@ -18,6 +18,7 @@ import './index.css';
  */
 import ChatAgentSetup from './components/ChatAgentSetup';
 import VectorStorageSetup from './components/VectorStorageSetup';
+import ChatModuleSettings from './components/ChatModuleSettings';
 
 /**
  * Admin App Component
@@ -38,6 +39,9 @@ function AdminApp() {
 		vector_embedding_model: 'text-embedding-ada-002',
 		vector_index_name: 'directorist-listings',
 		vector_namespace: '',
+		// Chat module settings
+		chat_widget_position: 'bottom-right',
+		chat_widget_color: '#667eea',
 	});
 	const [loading, setLoading] = useState(true);
 	const [notice, setNotice] = useState(null);
@@ -112,6 +116,10 @@ function AdminApp() {
 						name: 'vector-storage',
 						title: 'Vector Storage',
 					},
+					{
+						name: 'chat-module',
+						title: 'Chat Module Settings',
+					},
 				]}
 			>
 				{(tab) => (
@@ -124,6 +132,12 @@ function AdminApp() {
 						)}
 						{tab.name === 'vector-storage' && (
 							<VectorStorageSetup
+								settings={settings}
+								onSave={handleSave}
+							/>
+						)}
+						{tab.name === 'chat-module' && (
+							<ChatModuleSettings
 								settings={settings}
 								onSave={handleSave}
 							/>

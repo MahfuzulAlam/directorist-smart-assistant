@@ -22,6 +22,20 @@ function ChatWidget() {
 	const messagesEndRef = useRef(null);
 	const inputRef = useRef(null);
 
+	// Get settings from localized data
+	const widgetSettings = window.directoristSmartAssistantChat?.settings || {
+		position: 'bottom-right',
+		color: '#667eea',
+	};
+
+	// Apply position class
+	const positionClass = widgetSettings.position === 'bottom-left' ? 'directorist-smart-assistant-chat-widget--left' : '';
+
+	// Generate CSS variables for color
+	const colorStyle = {
+		'--chat-primary-color': widgetSettings.color,
+	};
+
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 	};
@@ -86,7 +100,7 @@ function ChatWidget() {
 	};
 
 	return (
-		<div className="directorist-smart-assistant-chat-widget">
+		<div className={`directorist-smart-assistant-chat-widget ${positionClass}`} style={colorStyle}>
 			{isOpen && (
 				<div className="directorist-smart-assistant-chat-window">
 					<div className="directorist-smart-assistant-chat-header">
@@ -96,7 +110,21 @@ function ChatWidget() {
 							onClick={() => setIsOpen(false)}
 							aria-label="Close chat"
 						>
-							×
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 16 16"
+								fill="none"
+								xmlns="http://www.w3.org/2000/svg"
+							>
+								<path
+									d="M12 4L4 12M4 4L12 12"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
+							</svg>
 						</button>
 					</div>
 
@@ -147,15 +175,30 @@ function ChatWidget() {
 							onChange={(e) => setInputValue(e.target.value)}
 							onKeyPress={handleKeyPress}
 							placeholder="Type your message..."
-							rows={2}
+							rows={1}
 							disabled={loading}
 						/>
 						<button
 							className="directorist-smart-assistant-chat-send"
 							onClick={handleSend}
 							disabled={!inputValue.trim() || loading}
+							aria-label="Send message"
 						>
-							Send
+							<svg
+								width="20"
+								height="20"
+								viewBox="0 0 20 20"
+								fill="none"
+								xmlns="http://www.w3.org/2000/svg"
+							>
+								<path
+									d="M18 2L9 11M18 2L12 18L9 11M18 2L2 8L9 11"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
+							</svg>
 						</button>
 					</div>
 				</div>

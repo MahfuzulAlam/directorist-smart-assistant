@@ -8,6 +8,7 @@
 namespace DirectoristSmartAssistant\REST_API;
 
 use DirectoristSmartAssistant\Settings\Settings_Manager;
+use DirectoristSmartAssistant\Vector\Vector_Query;
 
 /**
  * REST API Controller class
@@ -333,11 +334,14 @@ class REST_Controller {
 
 		$settings = $settings_manager->get_settings();
 
-		// Get listings context
-		$listings_context = $this->get_listings_context();
+		// Get listings context using vector query
+		$listings_context = $this->get_listings_context_from_vector( $message );
 
 		// Build messages array
 		$messages = array();
+
+		// Initialize system prompt with default or from settings
+		$system_prompt = ! empty( $settings['system_prompt'] ) ? $settings['system_prompt'] : 'You are a helpful assistant for a business directory website. Answer questions about the listings available on this site.';
 
 		// Website name
 		$website_name = get_bloginfo( 'name' );
@@ -347,16 +351,7 @@ class REST_Controller {
 				__( 'You are a helpful assistant for the website - %s. ', 'directorist-smart-assistant' ),
 				$website_name
 			) . $system_prompt . "\n";
-		}else{
-			$system_prompt = sprintf(
-				/* translators: %s: Website name */
-				__( 'You are a helpful assistant. ', 'directorist-smart-assistant' ),
-				$website_name
-			) . $system_prompt . "\n";
 		}
-
-		// System message with listings context
-		$system_prompt .= ! empty( $settings['system_prompt'] ) ? $settings['system_prompt'] : '';
 		
 		// Add agent name to system prompt if set
 		$agent_name = ! empty( $settings['chat_agent_name'] ) ? trim( $settings['chat_agent_name'] ) : '';
@@ -400,6 +395,8 @@ class REST_Controller {
 			'content' => $message,
 		);
 
+		file_put_contents( __DIR__ . '/chat.json', json_encode( $messages ) );
+
 		// Call OpenAI API
 		$response = $this->call_openai_api(
 			$api_key,
@@ -441,11 +438,56 @@ class REST_Controller {
 	}
 
 	/**
-	 * Get listings context string
+	 * Get listings context string from vector query
+	 *
+	 * @param string $query_text User's message to query vector database.
+	 * @return string
+	 */
+	private function get_listings_context_from_vector( string $query_text ): string {
+		$settings = Settings_Manager::get_instance()->get_settings();
+		
+		// Check if vector storage is configured
+		$api_base_url = $settings['vector_api_base_url'] ?? '';
+		$api_secret_key = $settings['vector_api_secret_key'] ?? '';
+
+		// If vector storage is not configured, fallback to direct query
+		if ( empty( $api_base_url ) || empty( $api_secret_key ) ) {
+			return $this->get_listings_context_fallback();
+		}
+
+		// Query vector database
+		$vector_query = Vector_Query::get_instance();
+		$top_k = 3; // Get top 10 relevant listings
+		$query_results = $vector_query->query( $query_text, $top_k );
+
+		if ( is_wp_error( $query_results ) ) {
+			// Fallback to direct query if vector query fails
+			return $this->get_listings_context_fallback();
+		}
+
+		// Get listings from query results
+		$listings = $vector_query->get_listings_from_query_results( $query_results );
+
+		// Format as context string
+		$context = '';
+		foreach ( $listings as $listing ) {
+			$context .= sprintf(
+				"Title: %s\nContent: %s\nURL: %s\n\n",
+				$listing['title'],
+				wp_strip_all_tags( $listing['content'] ),
+				isset( $listing['url'] ) ? $listing['url'] : ''
+			);
+		}
+
+		return $context;
+	}
+
+	/**
+	 * Fallback method to get listings context (when vector storage is not available)
 	 *
 	 * @return string
 	 */
-	private function get_listings_context(): string {
+	private function get_listings_context_fallback(): string {
 		$listings = $this->get_listings_data();
 		$context  = '';
 
@@ -461,7 +503,7 @@ class REST_Controller {
 	}
 
 	/**
-	 * Get listings data
+	 * Get listings data (fallback method)
 	 *
 	 * @return array
 	 */
@@ -474,8 +516,9 @@ class REST_Controller {
 			return $cached;
 		}
 
+		$post_type = defined( 'ATBDP_POST_TYPE' ) ? ATBDP_POST_TYPE : 'at_biz_dir';
 		$args = array(
-			'post_type'      => 'at_biz_dir',
+			'post_type'      => $post_type,
 			'posts_per_page' => -1,
 			'post_status'    => 'publish',
 		);

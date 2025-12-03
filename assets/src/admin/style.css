@@ -16,7 +16,7 @@
 
 .directorist-smart-assistant-tabs .components-tab-panel__tabs {
 	border-bottom: 2px solid #e5e7eb;
-	margin-bottom: 0;
+	margin-bottom: 20px;
 }
 
 .directorist-smart-assistant-tabs .components-tab-panel__tabs button {
@@ -696,6 +696,7 @@
 	letter-spacing: -0.2px;
 }
 
+.chat-module-settings__field .components-text-control__input,
 .chat-module-settings__field .components-select-control__input {
 	border: 1.5px solid #e5e7eb;
 	border-radius: 8px;
@@ -705,6 +706,7 @@
 	background: #ffffff;
 }
 
+.chat-module-settings__field .components-text-control__input:focus,
 .chat-module-settings__field .components-select-control__input:focus {
 	border-color: #667eea;
 	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);

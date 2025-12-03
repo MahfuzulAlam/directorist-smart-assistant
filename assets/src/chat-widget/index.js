@@ -26,7 +26,11 @@ function ChatWidget() {
 	const widgetSettings = window.directoristSmartAssistantChat?.settings || {
 		position: 'bottom-right',
 		color: '#667eea',
+		agentName: '',
 	};
+
+	// Get agent name or default
+	const agentName = widgetSettings.agentName || 'Smart Assistant';
 
 	// Apply position class
 	const positionClass = widgetSettings.position === 'bottom-left' ? 'directorist-smart-assistant-chat-widget--left' : '';
@@ -104,7 +108,7 @@ function ChatWidget() {
 			{isOpen && (
 				<div className="directorist-smart-assistant-chat-window">
 					<div className="directorist-smart-assistant-chat-header">
-						<h3>Smart Assistant</h3>
+						<h3>{agentName}</h3>
 						<button
 							className="directorist-smart-assistant-chat-close"
 							onClick={() => setIsOpen(false)}
@@ -131,7 +135,12 @@ function ChatWidget() {
 					<div className="directorist-smart-assistant-chat-messages">
 						{messages.length === 0 && (
 							<div className="directorist-smart-assistant-chat-welcome">
-								<p>Hello! I'm your AI assistant. How can I help you today?</p>
+								<p>
+									{agentName && agentName !== 'Smart Assistant' 
+										? `Hello! I'm ${agentName}, your AI assistant. How can I help you today?`
+										: "Hello! I'm your AI assistant. How can I help you today?"
+									}
+								</p>
 							</div>
 						)}
 

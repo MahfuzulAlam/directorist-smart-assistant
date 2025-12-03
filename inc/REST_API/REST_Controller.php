@@ -140,6 +140,11 @@ class REST_Controller {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
+						'chat_agent_name' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
 						'chat_widget_position' => array(
 							'type'              => 'string',
 							'required'          => false,
@@ -270,6 +275,9 @@ class REST_Controller {
 		}
 
 		// Chat module settings
+		if ( isset( $params['chat_agent_name'] ) ) {
+			$settings['chat_agent_name'] = sanitize_text_field( $params['chat_agent_name'] );
+		}
 		if ( isset( $params['chat_widget_position'] ) ) {
 			$settings['chat_widget_position'] = sanitize_text_field( $params['chat_widget_position'] );
 		}
@@ -331,9 +339,45 @@ class REST_Controller {
 		// Build messages array
 		$messages = array();
 
+		// Website name
+		$website_name = get_bloginfo( 'name' );
+		if ( ! empty( $website_name ) ) {
+			$system_prompt = sprintf(
+				/* translators: %s: Website name */
+				__( 'You are a helpful assistant for the website - %s. ', 'directorist-smart-assistant' ),
+				$website_name
+			) . $system_prompt . "\n";
+		}else{
+			$system_prompt = sprintf(
+				/* translators: %s: Website name */
+				__( 'You are a helpful assistant. ', 'directorist-smart-assistant' ),
+				$website_name
+			) . $system_prompt . "\n";
+		}
+
 		// System message with listings context
-		$system_prompt = ! empty( $settings['system_prompt'] ) ? $settings['system_prompt'] : 'You are a helpful assistant for a business directory website.';
+		$system_prompt .= ! empty( $settings['system_prompt'] ) ? $settings['system_prompt'] : '';
+		
+		// Add agent name to system prompt if set
+		$agent_name = ! empty( $settings['chat_agent_name'] ) ? trim( $settings['chat_agent_name'] ) : '';
+		if ( ! empty( $agent_name ) ) {
+			$system_prompt = sprintf(
+				/* translators: %s: Agent name */
+				__( 'Your name is %s. ', 'directorist-smart-assistant' ),
+				$agent_name
+			) . $system_prompt;
+		}
+		
 		$system_prompt .= "\n\nAvailable listings:\n" . $listings_context;
+
+		$system_prompt .= "\n\nCRITICAL INSTRUCTIONS - READ CAREFULLY:\n"
+			. "1. The content below is the SOURCE OF TRUTH - always prioritize it over any previous conversation history\n"
+			. "2. Search through ALL content below case-insensitively (ignore capitalization differences like \"PaikarClud\" vs \"paikarclub\")\n"
+			. "3. If the user asks about something that appears in ANY form (different capitalization, partial match, similar spelling, or variations) in the content below, you MUST provide an answer based on that content\n"
+			. "4. Look for keywords, phrases, and related terms - be flexible and intelligent with matching\n"
+			. "5. If you previously said information was not available but it actually exists in the content below, CORRECT YOURSELF and provide the correct answer\n"
+			. "6. Only say information is not available if you have thoroughly searched ALL posts and the information is genuinely not present\n"
+			. "7. When you find the information, cite the post title it came from\n";
 
 		$messages[] = array(
 			'role'    => 'system',

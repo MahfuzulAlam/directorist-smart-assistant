@@ -81,6 +81,7 @@ class Enqueuer {
 				'settings' => array(
 					'position' => $settings['chat_widget_position'] ?? 'bottom-right',
 					'color'    => $settings['chat_widget_color'] ?? '#667eea',
+					'agentName' => $settings['chat_agent_name'] ?? '',
 				),
 			)
 		);

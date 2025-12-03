@@ -3,6 +3,7 @@
  */
 import { useState } from '@wordpress/element';
 import {
+	TextControl,
 	SelectControl,
 	Button,
 } from '@wordpress/components';
@@ -41,6 +42,16 @@ export default function ChatModuleSettings({ settings, onSave }) {
 			<div className="chat-module-settings__section">
 				<h2>{__('Chat Widget Configuration', 'directorist-smart-assistant')}</h2>
 				<p>{__('Customize the appearance and position of the chat widget on your website.', 'directorist-smart-assistant')}</p>
+
+				<div className="chat-module-settings__field">
+					<TextControl
+						label={__('Chat Agent Name', 'directorist-smart-assistant')}
+						value={localSettings.chat_agent_name || ''}
+						onChange={(value) => handleChange('chat_agent_name', value)}
+						placeholder={__('e.g., Assistant, Helper, Support', 'directorist-smart-assistant')}
+						help={__('Enter a name for your AI chat agent. This name will be used in the system prompt to help the AI identify itself and provide a personalized experience to users.', 'directorist-smart-assistant')}
+					/>
+				</div>
 
 				<div className="chat-module-settings__field">
 					<SelectControl

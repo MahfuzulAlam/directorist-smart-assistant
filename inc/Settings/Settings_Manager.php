@@ -67,6 +67,7 @@ class Settings_Manager {
 			'vector_index_name'     => 'directorist-listings',
 			'vector_namespace'       => '',
 			// Chat module settings
+			'chat_agent_name'        => '',
 			'chat_widget_position'   => 'bottom-right',
 			'chat_widget_color'      => '#667eea',
 		);

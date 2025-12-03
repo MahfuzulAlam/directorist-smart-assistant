@@ -219,6 +219,53 @@
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+/* Links in chat messages */
+.directorist-smart-assistant-chat-message-content a.directorist-smart-assistant-chat-link {
+	color: var(--chat-primary-color, #667eea);
+	text-decoration: none;
+	font-weight: 500;
+	border-bottom: 1px solid transparent;
+	transition: all 0.2s ease;
+}
+
+.directorist-smart-assistant-chat-message-content a.directorist-smart-assistant-chat-link:hover {
+	color: var(--chat-primary-color-dark, #5568d3);
+	border-bottom-color: var(--chat-primary-color-dark, #5568d3);
+}
+
+.directorist-smart-assistant-chat-message--user .directorist-smart-assistant-chat-message-content a.directorist-smart-assistant-chat-link {
+	color: rgba(255, 255, 255, 0.95);
+	border-bottom-color: rgba(255, 255, 255, 0.5);
+}
+
+.directorist-smart-assistant-chat-message--user .directorist-smart-assistant-chat-message-content a.directorist-smart-assistant-chat-link:hover {
+	color: #ffffff;
+	border-bottom-color: #ffffff;
+}
+
+/* Lists in chat messages */
+.directorist-smart-assistant-chat-message-content ol {
+	margin: 8px 0;
+	padding-left: 24px;
+	list-style-type: decimal;
+}
+
+.directorist-smart-assistant-chat-message-content ol li {
+	margin: 6px 0;
+	line-height: 1.6;
+}
+
+.directorist-smart-assistant-chat-message-content ul {
+	margin: 8px 0;
+	padding-left: 24px;
+	list-style-type: disc;
+}
+
+.directorist-smart-assistant-chat-message-content ul li {
+	margin: 6px 0;
+	line-height: 1.6;
+}
+
 .directorist-smart-assistant-chat-loading {
 	display: flex;
 	gap: 6px;

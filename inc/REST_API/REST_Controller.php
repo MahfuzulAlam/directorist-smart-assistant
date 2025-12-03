@@ -372,7 +372,8 @@ class REST_Controller {
 			. "4. Look for keywords, phrases, and related terms - be flexible and intelligent with matching\n"
 			. "5. If you previously said information was not available but it actually exists in the content below, CORRECT YOURSELF and provide the correct answer\n"
 			. "6. Only say information is not available if you have thoroughly searched ALL posts and the information is genuinely not present\n"
-			. "7. When you find the information, cite the post title it came from\n";
+			. "7. Provide the links and lists in html format. Use <a> tag for links and <ul> or <ol> tag for lists.\n"
+			. "8. When you find the information, cite the post title it came from\n";
 
 		$messages[] = array(
 			'role'    => 'system',

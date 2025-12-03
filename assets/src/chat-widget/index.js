@@ -149,8 +149,15 @@ function ChatWidget() {
 								key={index}
 								className={`directorist-smart-assistant-chat-message directorist-smart-assistant-chat-message--${message.role}`}
 							>
-								<div className="directorist-smart-assistant-chat-message-content">
-									{message.content}
+								<div
+									className="directorist-smart-assistant-chat-message-content"
+									dangerouslySetInnerHTML={
+										message.role === 'assistant' 
+											? { __html: (message.content) }
+											: undefined
+									}
+								>
+									{message.role === 'user' ? message.content : null}
 								</div>
 							</div>
 						))}

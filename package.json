@@ -1,0 +1,25 @@
+{
+	"name": "directorist-smart-assistant",
+	"version": "1.0.0",
+	"description": "AI-powered chat assistant for Directorist listings using OpenAI",
+	"author": "wpXplore",
+	"license": "GPL-2.0-or-later",
+	"engines": {
+		"node": ">=20.19.0"
+	},
+	"scripts": {
+		"build": "wp-scripts build",
+		"start": "wp-scripts start",
+		"packages-update": "wp-scripts packages-update"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^31.1.0"
+	},
+	"dependencies": {
+		"@wordpress/api-fetch": "^7.10.0",
+		"@wordpress/components": "^28.10.0",
+		"@wordpress/element": "^6.10.0",
+		"@wordpress/i18n": "^5.10.0",
+		"@wordpress/notices": "^5.10.0"
+	}
+}

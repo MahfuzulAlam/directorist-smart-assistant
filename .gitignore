@@ -1,0 +1,17 @@
+node_modules/
+vendor/
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+composer.lock
+assets/build/
+*.asset.php
+

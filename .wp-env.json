@@ -1,0 +1,13 @@
+{
+	"core": "WordPress/WordPress#master",
+	"plugins": [
+		"."
+	],
+	"themes": [
+		"WordPress/twenty-twenty-three"
+	],
+	"mappings": {
+		"wp-content/plugins/directorist-smart-assistant": "."
+	}
+}
+

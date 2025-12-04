@@ -244,15 +244,27 @@
 }
 
 /* Lists in chat messages */
-.directorist-smart-assistant-chat-message-content ol {
+.directorist-smart-assistant-chat-message-content ul.dsa-list-numbered {
 	margin: 8px 0;
-	padding-left: 24px;
-	list-style-type: decimal;
+	padding-left: 0;
+	list-style: none;
 }
 
-.directorist-smart-assistant-chat-message-content ol li {
+.directorist-smart-assistant-chat-message-content ul.dsa-list-numbered li {
 	margin: 6px 0;
 	line-height: 1.6;
+	padding-left: 24px;
+	position: relative;
+}
+
+.directorist-smart-assistant-chat-message-content ul.dsa-list-numbered li::before {
+	content: '✓';
+	position: absolute;
+	left: 0;
+	color: var(--chat-primary-color, #667eea);
+	font-weight: 600;
+	font-size: 16px;
+	line-height: 1.5;
 }
 
 .directorist-smart-assistant-chat-message-content ul {

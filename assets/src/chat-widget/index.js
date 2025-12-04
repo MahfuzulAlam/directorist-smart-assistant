@@ -40,7 +40,7 @@ function formatMessageContent(text) {
 
 	const flushList = () => {
 		if (listItems.length > 0) {
-			processedLines.push(`<ol>${listItems.join('')}</ol>`);
+			processedLines.push(`<ul class="dsa-list-numbered">${listItems.join('')}</ul>`);
 			listItems = [];
 		}
 		inList = false;
@@ -109,7 +109,11 @@ function formatMessageContent(text) {
 	flushBulletList();
 
 	// Join lines with <br> tags
-	return processedLines;
+	let joinedLines = processedLines.map(line => line || '<br>').join('<br>');
+
+	// Replace multiple consecutive <br> tags with a single <br>
+	const result = joinedLines.replace(/(<br>\s*){2,}/g, '<br>');
+	return result;
 }
 
 /**
@@ -169,13 +173,6 @@ function processInlineMarkdown(text) {
 		processedText = processedText.replace(escapeHtml(placeholder), linkHtml);
 	});
 
-	processedText = processedText.replace(/(<br>\s*){2,}/g, '<br>');
-	
-	// Remove consecutive <br> (two or more in a row) from processedText
-	// If processedText is a string, just remove consecutive <br>
-	// if (typeof processedText === 'string') {
-	// 	return processedText.replace(/(<br>\s*){2,}/g, '<br>');
-	// }
 	return processedText;
 }
 

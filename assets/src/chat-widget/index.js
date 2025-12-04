@@ -11,6 +11,175 @@ import apiFetch from '@wordpress/api-fetch';
 import './index.css';
 
 /**
+ * Convert markdown-like text to HTML
+ * Converts markdown links [text](url) to HTML links
+ * Converts bold text **text** to <strong>
+ * Converts bullet points (- item) to HTML lists
+ * Converts numbered lists to HTML ordered lists
+ *
+ * @param {string} text The text to convert
+ * @return {string} HTML string
+ */
+function formatMessageContent(text) {
+	if (!text) return '';
+
+	// Escape HTML to prevent XSS
+	const escapeHtml = (str) => {
+		const div = document.createElement('div');
+		div.textContent = str;
+		return div.innerHTML;
+	};
+
+	// Split text into lines for better processing
+	const lines = text.split('\n');
+	const processedLines = [];
+	let inList = false;
+	let listItems = [];
+	let inBulletList = false;
+	let bulletItems = [];
+
+	const flushList = () => {
+		if (listItems.length > 0) {
+			processedLines.push(`<ol>${listItems.join('')}</ol>`);
+			listItems = [];
+		}
+		inList = false;
+	};
+
+	const flushBulletList = () => {
+		if (bulletItems.length > 0) {
+			processedLines.push(`<ul>${bulletItems.join('')}</ul>`);
+			bulletItems = [];
+		}
+		inBulletList = false;
+	};
+
+	// Process each line
+	for (let i = 0; i < lines.length; i++) {
+		let line = lines[i];
+		const trimmedLine = line.trim();
+		
+		// Check if line is a numbered list item (1. text or 1) text)
+		const listMatch = trimmedLine.match(/^(\d+)[\.\)]\s+(.+)$/);
+		
+		// Check if line is a bullet point (- text or * text)
+		const bulletMatch = trimmedLine.match(/^[-*]\s+(.+)$/);
+		
+		if (listMatch) {
+			// Flush bullet list if we were in one
+			if (inBulletList) {
+				flushBulletList();
+			}
+
+			const itemContent = listMatch[2];
+			let processedContent = processInlineMarkdown(itemContent);
+			listItems.push(`<li>${processedContent}</li>`);
+			inList = true;
+		} else if (bulletMatch) {
+			// Flush numbered list if we were in one
+			if (inList) {
+				flushList();
+			}
+
+			const itemContent = bulletMatch[1];
+			let processedContent = processInlineMarkdown(itemContent);
+			bulletItems.push(`<li>${processedContent}</li>`);
+			inBulletList = true;
+		} else {
+			// Flush lists if we were in one
+			if (inList) {
+				flushList();
+			}
+			if (inBulletList) {
+				flushBulletList();
+			}
+			
+			// Process regular line
+			if (trimmedLine) {
+				let processedLine = processInlineMarkdown(trimmedLine);
+				processedLines.push(processedLine);
+			} else {
+				processedLines.push('');
+			}
+		}
+	}
+
+	// Flush any remaining lists
+	flushList();
+	flushBulletList();
+
+	// Join lines with <br> tags
+	return processedLines;
+}
+
+/**
+ * Process inline markdown (bold, links) in text
+ *
+ * @param {string} text The text to process
+ * @return {string} HTML string
+ */
+function processInlineMarkdown(text) {
+	if (!text) return '';
+
+	// Escape HTML to prevent XSS
+	const escapeHtml = (str) => {
+		const div = document.createElement('div');
+		div.textContent = str;
+		return div.innerHTML;
+	};
+
+	// Replace markdown links with placeholders first
+	const linkPlaceholders = [];
+	let linkIndex = 0;
+	let processedText = text.replace(
+		/\[([^\]]+)\]\(([^)]+)\)/g,
+		(match, linkText, url) => {
+			const placeholder = `__LINK_${linkIndex}__`;
+			linkPlaceholders.push({ placeholder, linkText, url });
+			linkIndex++;
+			return placeholder;
+		}
+	);
+
+	// Replace bold text **text** with placeholders
+	const boldPlaceholders = [];
+	let boldIndex = 0;
+	processedText = processedText.replace(
+		/\*\*([^*]+)\*\*/g,
+		(match, boldText) => {
+			const placeholder = `__BOLD_${boldIndex}__`;
+			boldPlaceholders.push({ placeholder, boldText });
+			boldIndex++;
+			return placeholder;
+		}
+	);
+
+	// Escape HTML
+	processedText = escapeHtml(processedText);
+
+	// Restore bold text
+	boldPlaceholders.forEach(({ placeholder, boldText }) => {
+		const boldHtml = `<strong>${escapeHtml(boldText)}</strong>`;
+		processedText = processedText.replace(escapeHtml(placeholder), boldHtml);
+	});
+
+	// Restore links as HTML
+	linkPlaceholders.forEach(({ placeholder, linkText, url }) => {
+		const linkHtml = `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="directorist-smart-assistant-chat-link">${escapeHtml(linkText)}</a>`;
+		processedText = processedText.replace(escapeHtml(placeholder), linkHtml);
+	});
+
+	processedText = processedText.replace(/(<br>\s*){2,}/g, '<br>');
+	
+	// Remove consecutive <br> (two or more in a row) from processedText
+	// If processedText is a string, just remove consecutive <br>
+	// if (typeof processedText === 'string') {
+	// 	return processedText.replace(/(<br>\s*){2,}/g, '<br>');
+	// }
+	return processedText;
+}
+
+/**
  * Chat Widget Component
  */
 function ChatWidget() {
@@ -153,7 +322,7 @@ function ChatWidget() {
 									className="directorist-smart-assistant-chat-message-content"
 									dangerouslySetInnerHTML={
 										message.role === 'assistant' 
-											? { __html: (message.content) }
+											? { __html: formatMessageContent(message.content) }
 											: undefined
 									}
 								>

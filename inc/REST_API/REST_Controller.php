@@ -372,7 +372,7 @@ class REST_Controller {
 			. "4. Look for keywords, phrases, and related terms - be flexible and intelligent with matching\n"
 			. "5. If you previously said information was not available but it actually exists in the content below, CORRECT YOURSELF and provide the correct answer\n"
 			. "6. Only say information is not available if you have thoroughly searched ALL posts and the information is genuinely not present\n"
-			. "7. Provide the links and lists in html format. Use <a> tag for links and <ul> or <ol> tag for lists.\n"
+			. "7. Always use HTML/Markdown format for the response.\n"
 			. "8. When you find the information, cite the post title it came from\n";
 
 		$messages[] = array(
@@ -544,6 +544,25 @@ class REST_Controller {
 	}
 
 	/**
+	 * Check if model requires max_completion_tokens instead of max_tokens
+	 *
+	 * @param string $model Model name.
+	 * @return bool
+	 */
+	private function model_requires_max_completion_tokens( string $model ): bool {
+		// Models that require max_completion_tokens (newer models)
+		$newer_models = array( 'gpt-4o', 'o1', 'o1-preview', 'o1-mini', 'gpt-5-mini' );
+		
+		foreach ( $newer_models as $newer_model ) {
+			if ( strpos( strtolower( $model ), strtolower( $newer_model ) ) !== false ) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+
+	/**
 	 * Call OpenAI API
 	 *
 	 * @param string $api_key API key.
@@ -560,8 +579,14 @@ class REST_Controller {
 			'model'       => $model,
 			'messages'    => $messages,
 			'temperature' => $temperature,
-			'max_tokens'  => $max_tokens,
 		);
+
+		// Use max_completion_tokens for newer models, max_tokens for older models
+		if ( $this->model_requires_max_completion_tokens( $model ) ) {
+			$body['max_completion_tokens'] = $max_tokens;
+		} else {
+			$body['max_tokens'] = $max_tokens;
+		}
 
 		$response = wp_remote_post(
 			$url,

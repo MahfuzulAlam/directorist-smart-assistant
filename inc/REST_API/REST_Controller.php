@@ -396,7 +396,7 @@ class REST_Controller {
 			'content' => $message,
 		);
 
-		file_put_contents( __DIR__ . '/chat.json', json_encode( $messages ) );
+		//file_put_contents( __DIR__ . '/chat.json', json_encode( $messages ) );
 
 		// Call OpenAI API
 		$response = $this->call_openai_api(
@@ -473,10 +473,11 @@ class REST_Controller {
 		$context = '';
 		foreach ( $listings as $listing ) {
 			$context .= sprintf(
-				"Title: %s\nContent: %s\nURL: %s\n\n",
+				"Title: %s\nContent: %s\nURL: %s\n Related Information: %s\n\n",
 				$listing['title'],
 				wp_strip_all_tags( $listing['content'] ),
-				isset( $listing['url'] ) ? $listing['url'] : ''
+				isset( $listing['url'] ) ? $listing['url'] : '',
+				isset( $listing['submission_form_fields'] ) ? $listing['submission_form_fields'] : ''
 			);
 		}
 

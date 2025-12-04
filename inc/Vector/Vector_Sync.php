@@ -94,6 +94,11 @@ class Vector_Sync {
 	 * @return bool|WP_Error
 	 */
 	public function upsert_listing( int $post_id, $post ) {
+		// Validate post object
+		if ( ! $post || ! isset( $post->ID ) || empty( $post->ID ) ) {
+			return new \WP_Error( 'invalid_post', __( 'Invalid post object provided.', 'directorist-smart-assistant' ) );
+		}
+
 		$settings = Settings_Manager::get_instance()->get_settings();
 		$api_base_url = rtrim( $settings['vector_api_base_url'] ?? '', '/' );
 		$api_secret_key = $this->get_decrypted_secret_key();
@@ -112,7 +117,7 @@ class Vector_Sync {
 			'metadata'  => $metadata,
 		);
 
-        //file_put_contents( __DIR__ . '/vector-sync.json', json_encode( $data ) );
+        file_put_contents( __DIR__ . '/vector-sync.json', json_encode( $data ) );
 
 		// Make API request
 		$url = $api_base_url . '/api/v1/vectors/upsert';
@@ -160,15 +165,22 @@ class Vector_Sync {
 	 * @return string
 	 */
 	private function prepare_listing_text( $post ): string {
+		// Validate post object
+		if ( ! $post || ! isset( $post->ID ) || empty( $post->ID ) ) {
+			return '';
+		}
+
+		$post_id = intval( $post->ID );
 		$title = $post->post_title ?? '';
 		$content = $post->post_content ?? '';
+        $submission_form_fields = $this->get_submission_form_fields_with_values( $post_id );
 
 		// Strip HTML tags and clean up
 		$title = wp_strip_all_tags( $title );
 		$content = wp_strip_all_tags( $content );
 
 		// Combine title and content
-		$text = trim( $title . "\n\n" . $content );
+		$text = trim( $title . "\n\n" . $content . "\n\n" . $submission_form_fields );
 
 		return $text;
 	}
@@ -228,5 +240,52 @@ class Vector_Sync {
 		$settings_manager = Settings_Manager::get_instance();
 		return $settings_manager->decrypt_api_key( $secret_key );
 	}
-}
 
+    /**
+     * Get Submission Form Fields Of a Listing as label-value string.
+     *
+     * @param int $post_id The ID of the post/listing.
+     * @return string All submission fields in "Label: Value" format, separated by line breaks.
+     */
+    private function get_submission_form_fields_with_values( int $post_id ): string {
+        $output = '';
+
+        // Get listing types
+        $type_taxonomy = defined( 'ATBDP_TYPE' ) ? ATBDP_TYPE : 'at_biz_dir_types';
+        $listing_types = wp_get_post_terms( $post_id, $type_taxonomy, array( 'fields' => 'ids' ) );
+
+        if ( is_wp_error( $listing_types ) || empty( $listing_types ) ) {
+            return $output;
+        }
+
+        // Use the first listing type
+        $listing_type_id = $listing_types[0];
+        if ( empty( $listing_type_id ) ) {
+            return $output;
+        }
+
+        $submission_form_fields = get_term_meta( $listing_type_id, 'submission_form_fields', true );
+        if ( empty( $submission_form_fields ) ) {
+            return $output;
+        }
+
+        $fields = $submission_form_fields['fields'] ?? array();
+        if ( ! empty( $fields ) && is_array( $fields ) ) {
+            foreach ( $fields as $field ) {
+                if ( ! is_array( $field ) ) {
+                    continue;
+                }
+                if ( ! empty( $field['field_key'] ) ) {
+                    $field_key = $field['field_key'];
+                    $field_label = isset( $field['label'] ) ? $field['label'] : $field_key;
+                    $value = get_post_meta( $post_id, '_' .$field_key, true );
+                    if ( $value ) {
+                        $output .= $field_label . ': ' . $value . "\n";
+                    }
+                }
+            }
+        }
+        //file_put_contents( __DIR__ . '/submission-form-fields-2.json', json_encode( $output ) );
+        return trim( $output );
+    }
+}

@@ -19,6 +19,7 @@ import './index.css';
 import ChatAgentSetup from './components/ChatAgentSetup';
 import VectorStorageSetup from './components/VectorStorageSetup';
 import ChatModuleSettings from './components/ChatModuleSettings';
+import EmbeddingSetup from './components/EmbeddingSetup';
 
 /**
  * Admin App Component
@@ -31,9 +32,13 @@ function AdminApp() {
 		temperature: 0.7,
 		max_tokens: 1000,
 		// Vector storage settings
+		vector_service: 'wpxplore',
 		vector_api_base_url: '',
 		vector_api_secret_key: '',
 		vector_auto_sync: false,
+		pinecone_api_key: '',
+		pinecone_environment: '',
+		pinecone_index_name: '',
 		vector_chunk_size: 500,
 		vector_chunk_overlap: 50,
 		vector_embedding_model: 'text-embedding-ada-002',
@@ -43,6 +48,10 @@ function AdminApp() {
 		chat_agent_name: '',
 		chat_widget_position: 'bottom-right',
 		chat_widget_color: '#667eea',
+		// Embedding settings
+		embedding_service: 'openai',
+		embedding_openai_api_key: '',
+		embedding_openai_model: 'text-embedding-ada-002',
 	});
 	const [loading, setLoading] = useState(true);
 	const [notice, setNotice] = useState(null);
@@ -118,6 +127,10 @@ function AdminApp() {
 						title: 'Vector Storage',
 					},
 					{
+						name: 'embedding',
+						title: 'Embedding Service',
+					},
+					{
 						name: 'chat-module',
 						title: 'Chat Module Settings',
 					},
@@ -133,6 +146,12 @@ function AdminApp() {
 						)}
 						{tab.name === 'vector-storage' && (
 							<VectorStorageSetup
+								settings={settings}
+								onSave={handleSave}
+							/>
+						)}
+						{tab.name === 'embedding' && (
+							<EmbeddingSetup
 								settings={settings}
 								onSave={handleSave}
 							/>

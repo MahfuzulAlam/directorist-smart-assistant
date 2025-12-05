@@ -8,6 +8,7 @@
 namespace DirectoristSmartAssistant\Vector;
 
 use DirectoristSmartAssistant\Settings\Settings_Manager;
+use DirectoristSmartAssistant\Vector\Vector_Service_Manager;
 
 /**
  * Vector Query class
@@ -49,61 +50,24 @@ class Vector_Query {
 	 * @return array|WP_Error
 	 */
 	public function query( string $query_text, int $top_k = 5, array $filter = array() ) {
-		$settings = Settings_Manager::get_instance()->get_settings();
-		$api_base_url = rtrim( $settings['vector_api_base_url'] ?? '', '/' );
-		$api_secret_key = $this->get_decrypted_secret_key();
+		// Get vector service
+		$service_manager = Vector_Service_Manager::get_instance();
+		$service = $service_manager->get_service();
 
-		if ( empty( $api_base_url ) || empty( $api_secret_key ) ) {
-			return new \WP_Error( 'missing_credentials', __( 'Vector storage API credentials are not configured.', 'directorist-smart-assistant' ) );
+		if ( is_wp_error( $service ) ) {
+			error_log( 'Vector Query Error: ' . $service->get_error_message() );
+			return $service;
 		}
 
-		// Prepare request body
-		$body = array(
-			'text'   => $query_text,
-			'top_k'  => $top_k,
-			//'filter' => $filter,
-		);
+		// Use query_by_text if available, otherwise use query with empty vector
+		$result = $service->query_by_text( $query_text, $top_k, $filter );
 
-		// Make API request
-		$url = $api_base_url . '/api/v1/vectors/query';
-
-		$response = wp_remote_post(
-			$url,
-			array(
-				'headers' => array(
-					'X-API-Key'    => $api_secret_key,
-					'Content-Type' => 'application/json',
-				),
-				'body'    => wp_json_encode( $body ),
-				'timeout' => 30,
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			error_log( 'Vector Query Error: ' . $response->get_error_message() );
-			return $response;
+		if ( is_wp_error( $result ) ) {
+			error_log( 'Vector Query Error: ' . $result->get_error_message() );
+			return $result;
 		}
 
-		$response_code = wp_remote_retrieve_response_code( $response );
-		$response_body = wp_remote_retrieve_body( $response );
-
-		if ( 200 !== $response_code ) {
-			$error_message = sprintf(
-				/* translators: %d: HTTP status code */
-				__( 'Vector storage API returned error code %d.', 'directorist-smart-assistant' ),
-				$response_code
-			);
-			error_log( 'Vector Query Error: ' . $error_message . ' - ' . $response_body );
-			return new \WP_Error( 'api_error', $error_message );
-		}
-
-		$data = json_decode( $response_body, true );
-
-		if ( ! isset( $data['results'] ) || ! is_array( $data['results'] ) ) {
-			return new \WP_Error( 'invalid_response', __( 'Invalid response from vector storage API.', 'directorist-smart-assistant' ) );
-		}
-
-		return $data['results'];
+		return $result;
 	}
 
 	/**

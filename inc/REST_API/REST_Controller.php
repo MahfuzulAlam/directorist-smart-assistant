@@ -228,6 +228,12 @@ class REST_Controller {
 		if ( ! empty( $settings['vector_api_secret_key'] ) ) {
 			$settings['vector_api_secret_key'] = '***';
 		}
+		if ( ! empty( $settings['embedding_openai_api_key'] ) ) {
+			$settings['embedding_openai_api_key'] = 'sk-***';
+		}
+		if ( ! empty( $settings['pinecone_api_key'] ) ) {
+			$settings['pinecone_api_key'] = '***';
+		}
 
 		return new \WP_REST_Response( $settings, 200 );
 	}
@@ -250,6 +256,9 @@ class REST_Controller {
 		);
 
 		// Vector storage settings
+		if ( isset( $params['vector_service'] ) ) {
+			$settings['vector_service'] = sanitize_text_field( $params['vector_service'] );
+		}
 		if ( isset( $params['vector_api_base_url'] ) ) {
 			$settings['vector_api_base_url'] = esc_url_raw( $params['vector_api_base_url'] );
 		}
@@ -274,6 +283,16 @@ class REST_Controller {
 		if ( isset( $params['vector_namespace'] ) ) {
 			$settings['vector_namespace'] = sanitize_text_field( $params['vector_namespace'] );
 		}
+		// Pinecone specific settings
+		if ( isset( $params['pinecone_api_key'] ) ) {
+			$settings['pinecone_api_key'] = sanitize_text_field( $params['pinecone_api_key'] );
+		}
+		if ( isset( $params['pinecone_environment'] ) ) {
+			$settings['pinecone_environment'] = sanitize_text_field( $params['pinecone_environment'] );
+		}
+		if ( isset( $params['pinecone_index_name'] ) ) {
+			$settings['pinecone_index_name'] = sanitize_text_field( $params['pinecone_index_name'] );
+		}
 
 		// Chat module settings
 		if ( isset( $params['chat_agent_name'] ) ) {
@@ -284,6 +303,16 @@ class REST_Controller {
 		}
 		if ( isset( $params['chat_widget_color'] ) ) {
 			$settings['chat_widget_color'] = sanitize_text_field( $params['chat_widget_color'] );
+		}
+		// Embedding settings
+		if ( isset( $params['embedding_service'] ) ) {
+			$settings['embedding_service'] = sanitize_text_field( $params['embedding_service'] );
+		}
+		if ( isset( $params['embedding_openai_api_key'] ) ) {
+			$settings['embedding_openai_api_key'] = sanitize_text_field( $params['embedding_openai_api_key'] );
+		}
+		if ( isset( $params['embedding_openai_model'] ) ) {
+			$settings['embedding_openai_model'] = sanitize_text_field( $params['embedding_openai_model'] );
 		}
 
 		// Settings Manager handles API key encryption and preservation logic

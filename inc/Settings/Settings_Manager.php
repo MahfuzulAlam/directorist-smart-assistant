@@ -58,6 +58,7 @@ class Settings_Manager {
 			'temperature'   => 0.7,
 			'max_tokens'    => 1000,
 			// Vector storage defaults
+			'vector_service'        => 'wpxplore',
 			'vector_api_base_url'   => '',
 			'vector_api_secret_key'  => '',
 			'vector_auto_sync'       => false,
@@ -66,10 +67,18 @@ class Settings_Manager {
 			'vector_embedding_model' => 'text-embedding-ada-002',
 			'vector_index_name'     => 'directorist-listings',
 			'vector_namespace'       => '',
+			// Pinecone specific settings
+			'pinecone_api_key'      => '',
+			'pinecone_environment'  => '',
+			'pinecone_index_name'   => '',
 			// Chat module settings
 			'chat_agent_name'        => '',
 			'chat_widget_position'   => 'bottom-right',
 			'chat_widget_color'      => '#667eea',
+			// Embedding settings
+			'embedding_service'      => 'openai',
+			'embedding_openai_api_key' => '',
+			'embedding_openai_model' => 'text-embedding-ada-002',
 		);
 
 		$settings = get_option( $this->option_name, array() );
@@ -115,6 +124,22 @@ class Settings_Manager {
 		} else {
 			// If secret key is not provided, preserve existing
 			$settings['vector_api_secret_key'] = $current_settings['vector_api_secret_key'] ?? '';
+		}
+
+		// Handle embedding OpenAI API key encryption
+		if ( isset( $settings['embedding_openai_api_key'] ) ) {
+			// If API key is empty or masked, preserve existing encrypted key
+			if ( empty( $settings['embedding_openai_api_key'] ) || strpos( $settings['embedding_openai_api_key'], '***' ) !== false ) {
+				$settings['embedding_openai_api_key'] = $current_settings['embedding_openai_api_key'] ?? '';
+			}
+			// Only encrypt if it's a new unencrypted key (starts with "sk-")
+			elseif ( ! empty( $settings['embedding_openai_api_key'] ) && strpos( $settings['embedding_openai_api_key'], 'sk-' ) === 0 ) {
+				$settings['embedding_openai_api_key'] = $this->encrypt_api_key( $settings['embedding_openai_api_key'] );
+			}
+			// Otherwise, it's already encrypted, keep it as-is
+		} else {
+			// If API key is not provided, preserve existing
+			$settings['embedding_openai_api_key'] = $current_settings['embedding_openai_api_key'] ?? '';
 		}
 
 		// Merge with existing settings to preserve all fields

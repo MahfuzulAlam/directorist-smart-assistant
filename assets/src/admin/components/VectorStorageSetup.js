@@ -6,6 +6,7 @@ import {
 	TextControl,
 	ToggleControl,
 	Button,
+	SelectControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
@@ -47,46 +48,126 @@ export default function VectorStorageSetup({ settings, onSave }) {
 		}
 	};
 
+	const vectorService = localSettings.vector_service || 'wpxplore';
+	const isWpXplore = vectorService === 'wpxplore';
+	const isPinecone = vectorService === 'pinecone';
+
+	const serviceOptions = [
+		{ label: __('WpXplore', 'directorist-smart-assistant'), value: 'wpxplore' },
+		{ label: __('Pinecone', 'directorist-smart-assistant'), value: 'pinecone' },
+	];
+
 	return (
 		<div className="vector-storage-setup">
+			{/* Service Selection */}
+			<div className="vector-storage-setup__section">
+				<h2>{__('Vector Service', 'directorist-smart-assistant')}</h2>
+				<p>{__('Select the vector database service you want to use.', 'directorist-smart-assistant')}</p>
+
+				<div className="vector-storage-setup__field">
+					<SelectControl
+						label={__('Vector Service', 'directorist-smart-assistant')}
+						value={vectorService}
+						options={serviceOptions}
+						onChange={(value) => handleChange('vector_service', value)}
+						help={__('Choose the vector database service for storing and querying your listings', 'directorist-smart-assistant')}
+					/>
+				</div>
+			</div>
+
 			{/* API Configuration Section */}
 			<div className="vector-storage-setup__section">
 				<h2>{__('API Configuration', 'directorist-smart-assistant')}</h2>
 				<p>{__('Configure your vector storage API connection settings.', 'directorist-smart-assistant')}</p>
 
-				<div className="vector-storage-setup__field vector-storage-setup__field-api-url">
-					<TextControl
-						label={__('API Base URL', 'directorist-smart-assistant')}
-						value={localSettings.vector_api_base_url || ''}
-						onChange={(value) => handleChange('vector_api_base_url', value)}
-						placeholder="https://api.example.com"
-						help={__('Enter the base URL for your vector storage API', 'directorist-smart-assistant')}
-					/>
-				</div>
+				{isWpXplore && (
+					<>
+						<div className="vector-storage-setup__field vector-storage-setup__field-api-url">
+							<TextControl
+								label={__('API Base URL', 'directorist-smart-assistant')}
+								value={localSettings.vector_api_base_url || ''}
+								onChange={(value) => handleChange('vector_api_base_url', value)}
+								placeholder="https://api.example.com"
+								help={__('Enter the base URL for your vector storage API', 'directorist-smart-assistant')}
+							/>
+						</div>
 
-				<div className="vector-storage-setup__field vector-storage-setup__field-secret-key">
-					<label>
-						{__('API Secret Key', 'directorist-smart-assistant')}
-					</label>
-					<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-						<TextControl
-							type={showSecretKey ? 'text' : 'password'}
-							value={localSettings.vector_api_secret_key || ''}
-							onChange={(value) => handleChange('vector_api_secret_key', value)}
-							placeholder="Enter your API secret key"
-							style={{ flex: 1 }}
-						/>
-						<Button
-							variant="secondary"
-							onClick={() => setShowSecretKey(!showSecretKey)}
-						>
-							{showSecretKey ? __('Hide', 'directorist-smart-assistant') : __('Show', 'directorist-smart-assistant')}
-						</Button>
-					</div>
-					<p className="description">
-						{__('Enter your vector storage API secret key for authentication', 'directorist-smart-assistant')}
-					</p>
-				</div>
+						<div className="vector-storage-setup__field vector-storage-setup__field-secret-key">
+							<label>
+								{__('API Secret Key', 'directorist-smart-assistant')}
+							</label>
+							<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+								<TextControl
+									type={showSecretKey ? 'text' : 'password'}
+									value={localSettings.vector_api_secret_key || ''}
+									onChange={(value) => handleChange('vector_api_secret_key', value)}
+									placeholder="Enter your API secret key"
+									style={{ flex: 1 }}
+								/>
+								<Button
+									variant="secondary"
+									onClick={() => setShowSecretKey(!showSecretKey)}
+								>
+									{showSecretKey ? __('Hide', 'directorist-smart-assistant') : __('Show', 'directorist-smart-assistant')}
+								</Button>
+							</div>
+							<p className="description">
+								{__('Enter your vector storage API secret key for authentication', 'directorist-smart-assistant')}
+							</p>
+						</div>
+					</>
+				)}
+
+				{isPinecone && (
+					<>
+						<div className="vector-storage-setup__field">
+							<label>
+								{__('API Key', 'directorist-smart-assistant')}
+							</label>
+							<div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+								<TextControl
+									type={showSecretKey ? 'text' : 'password'}
+									value={localSettings.pinecone_api_key || ''}
+									onChange={(value) => handleChange('pinecone_api_key', value)}
+									placeholder="Enter your Pinecone API key"
+									style={{ flex: 1 }}
+								/>
+								<Button
+									variant="secondary"
+									onClick={() => setShowSecretKey(!showSecretKey)}
+								>
+									{showSecretKey ? __('Hide', 'directorist-smart-assistant') : __('Show', 'directorist-smart-assistant')}
+								</Button>
+							</div>
+							<p className="description">
+								{__('Enter your Pinecone API key for authentication', 'directorist-smart-assistant')}
+							</p>
+						</div>
+
+						<div className="vector-storage-setup__field">
+							<TextControl
+								label={__('Environment', 'directorist-smart-assistant')}
+								value={localSettings.pinecone_environment || ''}
+								onChange={(value) => handleChange('pinecone_environment', value)}
+								placeholder="us-east-1-aws"
+								help={__('Your Pinecone environment identifier', 'directorist-smart-assistant')}
+							/>
+						</div>
+
+						<div className="vector-storage-setup__field">
+							<TextControl
+								label={__('Index Name', 'directorist-smart-assistant')}
+								value={localSettings.pinecone_index_name || localSettings.vector_index_name || ''}
+								onChange={(value) => {
+									handleChange('pinecone_index_name', value);
+									handleChange('vector_index_name', value);
+								}}
+								placeholder="directorist-listings"
+								help={__('Name of your Pinecone index', 'directorist-smart-assistant')}
+							/>
+						</div>
+					</>
+				)}
 			</div>
 
 			{/* Sync Options Section */}

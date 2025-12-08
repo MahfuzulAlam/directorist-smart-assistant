@@ -60,6 +60,7 @@ class Settings_Manager {
 			// Vector storage defaults
 			'vector_api_base_url'   => '',
 			'vector_api_secret_key'  => '',
+			'vector_website_id'      => '',
 			'vector_auto_sync'       => false,
 			'vector_chunk_size'      => 500,
 			'vector_chunk_overlap'   => 50,

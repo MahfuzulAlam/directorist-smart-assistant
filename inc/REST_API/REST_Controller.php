@@ -108,6 +108,11 @@ class REST_Controller {
 							'required'          => false,
 							'sanitize_callback' => 'sanitize_text_field',
 						),
+						'vector_website_id' => array(
+							'type'              => 'string',
+							'required'          => false,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
 						'vector_auto_sync' => array(
 							'type'              => 'boolean',
 							'required'          => false,
@@ -255,6 +260,9 @@ class REST_Controller {
 		}
 		if ( isset( $params['vector_api_secret_key'] ) ) {
 			$settings['vector_api_secret_key'] = sanitize_text_field( $params['vector_api_secret_key'] );
+		}
+		if ( isset( $params['vector_website_id'] ) ) {
+			$settings['vector_website_id'] = sanitize_text_field( $params['vector_website_id'] );
 		}
 		if ( isset( $params['vector_auto_sync'] ) ) {
 			$settings['vector_auto_sync'] = (bool) $params['vector_auto_sync'];

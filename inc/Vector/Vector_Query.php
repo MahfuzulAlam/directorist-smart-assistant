@@ -52,6 +52,7 @@ class Vector_Query {
 		$settings = Settings_Manager::get_instance()->get_settings();
 		$api_base_url = rtrim( $settings['vector_api_base_url'] ?? '', '/' );
 		$api_secret_key = $this->get_decrypted_secret_key();
+		$website_id = $settings['vector_website_id'] ?? '';
 
 		if ( empty( $api_base_url ) || empty( $api_secret_key ) ) {
 			return new \WP_Error( 'missing_credentials', __( 'Vector storage API credentials are not configured.', 'directorist-smart-assistant' ) );
@@ -67,13 +68,21 @@ class Vector_Query {
 		// Make API request
 		$url = $api_base_url . '/api/v1/vectors/query';
 
+		// Prepare headers
+		$headers = array(
+			'X-API-Key'    => $api_secret_key,
+			'Content-Type' => 'application/json',
+		);
+
+		// Add Website ID header if configured
+		if ( ! empty( $website_id ) ) {
+			$headers['X-Website-ID'] = $website_id;
+		}
+
 		$response = wp_remote_post(
 			$url,
 			array(
-				'headers' => array(
-					'X-API-Key'    => $api_secret_key,
-					'Content-Type' => 'application/json',
-				),
+				'headers' => $headers,
 				'body'    => wp_json_encode( $body ),
 				'timeout' => 30,
 			)

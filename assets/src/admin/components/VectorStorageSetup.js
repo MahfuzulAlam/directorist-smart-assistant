@@ -87,6 +87,16 @@ export default function VectorStorageSetup({ settings, onSave }) {
 						{__('Enter your vector storage API secret key for authentication', 'directorist-smart-assistant')}
 					</p>
 				</div>
+
+				<div className="vector-storage-setup__field vector-storage-setup__field-website-id">
+					<TextControl
+						label={__('Website ID', 'directorist-smart-assistant')}
+						value={localSettings.vector_website_id || ''}
+						onChange={(value) => handleChange('vector_website_id', value)}
+						placeholder="Enter your website ID"
+						help={__('Enter your website ID that will be sent as X-Website-ID header in API calls', 'directorist-smart-assistant')}
+					/>
+				</div>
 			</div>
 
 			{/* Sync Options Section */}

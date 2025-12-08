@@ -10,10 +10,12 @@
 	"scripts": {
 		"build": "wp-scripts build",
 		"start": "wp-scripts start",
-		"packages-update": "wp-scripts packages-update"
+		"packages-update": "wp-scripts packages-update",
+		"package": "npm run build && node build-package.js"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^31.1.0"
+		"@wordpress/scripts": "^31.1.0",
+		"archiver": "^7.0.1"
 	},
 	"dependencies": {
 		"@wordpress/api-fetch": "^7.10.0",

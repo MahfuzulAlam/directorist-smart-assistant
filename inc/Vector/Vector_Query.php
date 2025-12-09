@@ -58,11 +58,18 @@ class Vector_Query {
 			return new \WP_Error( 'missing_credentials', __( 'Vector storage API credentials are not configured.', 'directorist-smart-assistant' ) );
 		}
 
+		$filter = [];
+
 		// Prepare request body
+		// Ensure website_id is set in the filter
+		if ( ! empty( $website_id ) ) {
+			$filter['website_id'] = $website_id;
+		}
+
 		$body = array(
 			'text'   => $query_text,
 			'top_k'  => $top_k,
-			//'filter' => $filter,
+			'filter' => $filter,
 		);
 
 		// Make API request

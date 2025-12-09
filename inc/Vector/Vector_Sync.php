@@ -112,6 +112,9 @@ class Vector_Sync {
 		$text = $this->prepare_listing_text( $post );
 		$metadata = $this->prepare_listing_metadata( $post_id );
 
+        // Add website id to metadata
+        if( $website_id ) $metadata['website_id'] = $website_id;
+
 		$data = array(
 			'post_id'   => $post_id,
 			'text'      => $text,

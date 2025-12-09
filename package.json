@@ -8,14 +8,15 @@
 		"node": ">=20.19.0"
 	},
 	"scripts": {
-		"build": "wp-scripts build",
+		"build": "cross-env NODE_ENV=production wp-scripts build",
 		"start": "wp-scripts start",
 		"packages-update": "wp-scripts packages-update",
 		"package": "npm run build && node build-package.js"
 	},
 	"devDependencies": {
 		"@wordpress/scripts": "^31.1.0",
-		"archiver": "^7.0.1"
+		"archiver": "^7.0.1",
+		"cross-env": "^7.0.3"
 	},
 	"dependencies": {
 		"@wordpress/api-fetch": "^7.10.0",

@@ -10,5 +10,9 @@ module.exports = {
 		...defaultConfig.output,
 		path: require('path').resolve(__dirname, 'assets/build'),
 	},
+	optimization: {
+		...defaultConfig.optimization,
+		minimize: process.env.NODE_ENV === 'production' || process.env.NODE_ENV === undefined,
+	},
 };
 

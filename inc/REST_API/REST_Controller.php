@@ -328,19 +328,22 @@ class REST_Controller {
 		}
 
 		$settings_manager = Settings_Manager::get_instance();
-		$api_key = $settings_manager->get_api_key();
+		$settings = $settings_manager->get_settings();
 
-		if ( empty( $api_key ) ) {
+		// Check if vector storage API is configured
+		$api_base_url = rtrim( $settings['vector_api_base_url'] ?? '', '/' );
+		$api_secret_key = $this->get_decrypted_secret_key();
+		$website_id = $settings['vector_website_id'] ?? '';
+
+		if ( empty( $api_base_url ) || empty( $api_secret_key ) ) {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
-					'message' => __( 'OpenAI API key is not configured.', 'directorist-smart-assistant' ),
+					'message' => __( 'Vector storage API credentials are not configured.', 'directorist-smart-assistant' ),
 				),
 				400
 			);
 		}
-
-		$settings = $settings_manager->get_settings();
 
 		// Get listings context using vector query
 		$listings_context = $this->get_listings_context_from_vector( $message );
@@ -373,16 +376,6 @@ class REST_Controller {
 		
 		$system_prompt .= "\n\nAvailable listings:\n" . $listings_context;
 
-		$system_prompt .= "\n\nCRITICAL INSTRUCTIONS - READ CAREFULLY:\n"
-			. "1. The content below is the SOURCE OF TRUTH - always prioritize it over any previous conversation history\n"
-			. "2. Search through ALL content below case-insensitively (ignore capitalization differences like \"PaikarClud\" vs \"paikarclub\")\n"
-			. "3. If the user asks about something that appears in ANY form (different capitalization, partial match, similar spelling, or variations) in the content below, you MUST provide an answer based on that content\n"
-			. "4. Look for keywords, phrases, and related terms - be flexible and intelligent with matching\n"
-			. "5. If you previously said information was not available but it actually exists in the content below, CORRECT YOURSELF and provide the correct answer\n"
-			. "6. Only say information is not available if you have thoroughly searched ALL posts and the information is genuinely not present\n"
-			. "7. Always use HTML/Markdown format for the response.\n"
-			. "8. When you find the information, cite the post title it came from\n";
-
 		$messages[] = array(
 			'role'    => 'system',
 			'content' => $system_prompt,
@@ -404,11 +397,13 @@ class REST_Controller {
 			'content' => $message,
 		);
 
-		//file_put_contents( __DIR__ . '/chat.json', json_encode( $messages ) );
-
-		// Call OpenAI API
-		$response = $this->call_openai_api(
-			$api_key,
+		// Call Vector API chat endpoint
+		$response = $this->call_vector_chat_api(
+			$api_base_url,
+			$api_secret_key,
+			$website_id,
+			$message, // prompt
+			$system_prompt,
 			$settings['model'] ?? 'gpt-3.5-turbo',
 			$messages,
 			$settings['temperature'] ?? 0.7,
@@ -428,7 +423,7 @@ class REST_Controller {
 		return new \WP_REST_Response(
 			array(
 				'success' => true,
-				'response' => $response,
+				'response' => $response['message'] ?? '',
 			),
 			200
 		);
@@ -571,62 +566,120 @@ class REST_Controller {
 	}
 
 	/**
-	 * Call OpenAI API
+	 * Call Vector API chat endpoint
 	 *
-	 * @param string $api_key API key.
+	 * @param string $api_base_url Vector API base URL.
+	 * @param string $api_secret_key Vector API secret key.
+	 * @param string $website_id Website ID.
+	 * @param string $prompt User prompt/message.
+	 * @param string $system_prompt System prompt.
 	 * @param string $model Model name.
 	 * @param array  $messages Messages array.
 	 * @param float  $temperature Temperature.
 	 * @param int    $max_tokens Max tokens.
-	 * @return string|\WP_Error
+	 * @return array|\WP_Error
 	 */
-	private function call_openai_api( string $api_key, string $model, array $messages, float $temperature, int $max_tokens ) {
-		$url = 'https://api.openai.com/v1/chat/completions';
+	private function call_vector_chat_api( string $api_base_url, string $api_secret_key, string $website_id, string $prompt, string $system_prompt, string $model, array $messages, float $temperature, int $max_tokens ) {
+		$url = $api_base_url . '/api/v1/vectors/chat';
 
 		$body = array(
-			'model'       => $model,
-			'messages'    => $messages,
-			'temperature' => $temperature,
+			'prompt'       => $prompt,
+			'system_prompt' => $system_prompt,
+			'model'        => $model,
+			'temperature'  => $temperature,
+			'max_tokens'   => $max_tokens,
+			'messages'     => $messages,
 		);
 
-		// Use max_completion_tokens for newer models, max_tokens for older models
-		if ( $this->model_requires_max_completion_tokens( $model ) ) {
-			$body['max_completion_tokens'] = $max_tokens;
-		} else {
-			$body['max_tokens'] = $max_tokens;
+		// Prepare headers
+		$headers = array(
+			'X-API-Key'    => $api_secret_key,
+			'Content-Type' => 'application/json',
+		);
+
+		// Add Website ID header if configured
+		if ( ! empty( $website_id ) ) {
+			$headers['X-Website-ID'] = $website_id;
 		}
 
 		$response = wp_remote_post(
 			$url,
 			array(
-				'headers' => array(
-					'Authorization' => 'Bearer ' . $api_key,
-					'Content-Type'  => 'application/json',
-				),
+				'headers' => $headers,
 				'body'    => wp_json_encode( $body ),
 				'timeout' => 30,
 			)
 		);
 
+
 		if ( is_wp_error( $response ) ) {
+			error_log( 'Vector Chat API Error: ' . $response->get_error_message() );
 			return $response;
 		}
 
 		$response_code = wp_remote_retrieve_response_code( $response );
 		$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
 
+		// Handle 422 validation error
+		if ( 422 === $response_code ) {
+			$error_message = __( 'Invalid request parameters.', 'directorist-smart-assistant' );
+			if ( isset( $response_body['detail'] ) && is_array( $response_body['detail'] ) ) {
+				$errors = array();
+				foreach ( $response_body['detail'] as $detail ) {
+					if ( isset( $detail['msg'] ) ) {
+						$errors[] = $detail['msg'];
+					}
+				}
+				if ( ! empty( $errors ) ) {
+					$error_message = implode( ', ', $errors );
+				}
+			}
+			error_log( 'Vector Chat API Validation Error: ' . $error_message );
+			return new \WP_Error( 'vector_api_validation_error', $error_message );
+		}
+
+		// Handle non-200 responses
 		if ( 200 !== $response_code ) {
-			$error_message = isset( $response_body['error']['message'] ) 
-				? $response_body['error']['message'] 
-				: __( 'OpenAI API request failed.', 'directorist-smart-assistant' );
-			return new \WP_Error( 'openai_error', $error_message );
+			$error_message = sprintf(
+				/* translators: %d: HTTP status code */
+				__( 'Vector storage API returned error code %d.', 'directorist-smart-assistant' ),
+				$response_code
+			);
+			error_log( 'Vector Chat API Error: ' . $error_message . ' - ' . wp_remote_retrieve_body( $response ) );
+			return new \WP_Error( 'vector_api_error', $error_message );
 		}
 
-		if ( ! isset( $response_body['choices'][0]['message']['content'] ) ) {
-			return new \WP_Error( 'openai_error', __( 'Invalid response from OpenAI API.', 'directorist-smart-assistant' ) );
+		// Validate response structure
+		if ( ! isset( $response_body['success'] ) || ! $response_body['success'] ) {
+			$error_message = isset( $response_body['message'] ) 
+				? $response_body['message'] 
+				: __( 'Vector API request failed.', 'directorist-smart-assistant' );
+			return new \WP_Error( 'vector_api_error', $error_message );
 		}
 
-		return $response_body['choices'][0]['message']['content'];
+		if ( ! isset( $response_body['message'] ) ) {
+			return new \WP_Error( 'vector_api_error', __( 'Invalid response from Vector API.', 'directorist-smart-assistant' ) );
+		}
+
+		return $response_body;
+	}
+
+	/**
+	 * Get decrypted secret key
+	 *
+	 * @return string
+	 */
+	private function get_decrypted_secret_key(): string {
+		$settings = Settings_Manager::get_instance()->get_settings();
+		$secret_key = $settings['vector_api_secret_key'] ?? '';
+
+		if ( empty( $secret_key ) ) {
+			return '';
+		}
+
+		// Decrypt the secret key (using same method as API key)
+		$settings_manager = Settings_Manager::get_instance();
+		return $settings_manager->decrypt_api_key( $secret_key );
 	}
 
 }

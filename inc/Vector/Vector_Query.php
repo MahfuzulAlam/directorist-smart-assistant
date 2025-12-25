@@ -135,10 +135,8 @@ class Vector_Query {
 		foreach ( $query_results as $result ) {
 			// Get post_id from result or metadata
 			$post_id = 0;
-			if ( isset( $result['post_id'] ) ) {
-				$post_id = intval( $result['post_id'] );
-			} elseif ( isset( $result['metadata']['post_id'] ) ) {
-				$post_id = intval( $result['metadata']['post_id'] );
+			if ( isset( $result['metadata']['listing_id'] ) ) {
+				$post_id = intval( $result['metadata']['listing_id'] );
 			}
 
 			if ( empty( $post_id ) ) {

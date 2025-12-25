@@ -112,16 +112,37 @@ class Vector_Sync {
 		$text = $this->prepare_listing_text( $post );
 		$metadata = $this->prepare_listing_metadata( $post_id );
 
-        // Add website id to metadata
-        if( $website_id ) $metadata['website_id'] = $website_id;
+		// Add listing_id to metadata
+		$metadata['listing_id'] = $post_id;
+
+		// Add listing status to metadata
+		$metadata['listing_status'] = $post->post_status;
+
+		// Add meta value for the meta key _ai_blocked
+		$ai_blocked = get_post_meta( $post_id, '_ai_blocked', true );
+		if ( $ai_blocked ) {
+			$metadata['ai_blocked'] = $ai_blocked;
+		}
+
+		// Add website id to metadata
+		// if ( $website_id ) {
+		// 	$metadata['website_id'] = $website_id;
+		// }
+
+		// Check if there's an existing upsert_id
+		$existing_upsert_id = get_post_meta( $post_id, '_upsert_id', true );
 
 		$data = array(
-			'post_id'   => $post_id,
 			'text'      => $text,
 			'metadata'  => $metadata,
 		);
 
-        file_put_contents( __DIR__ . '/vector-sync.json', json_encode( $data ) );
+		// If upsert_id exists, pass it as post_id for update
+		if ( ! empty( $existing_upsert_id ) ) {
+			$data['post_id'] = $existing_upsert_id;
+		}
+
+        //file_put_contents( __DIR__ . '/vector-sync.json', json_encode( $data ) );
 
 		// Make API request
 		$url = $api_base_url . '/api/v1/vectors/upsert';
@@ -161,11 +182,29 @@ class Vector_Sync {
 				$response_code
 			);
 			error_log( 'Vector Sync Error: ' . $error_message . ' - ' . $response_body );
+			// $response_data = json_decode( $response_body, true );
+			// file_put_contents( __DIR__ . '/vector-sync-response.json', json_encode( $response_data ) );
 			return new \WP_Error( 'api_error', $error_message );
 		}
 
-        update_post_meta( $post_id, '_vector_sync', 1 );
-        update_post_meta( $post_id, '_vector_sync_date', current_time( 'Y-m-d H:i:s' ) );
+		// Parse response to get post_id returned from API
+		$response_data = json_decode( $response_body, true );
+		$upsert_id = null;
+
+		//file_put_contents( __DIR__ . '/vector-sync-response.json', json_encode( $response_data ) );
+
+		if ( isset( $response_data['vector_id'] ) ) {
+			$upsert_id = $response_data['vector_id'];
+		}
+
+		// Save post meta
+		update_post_meta( $post_id, '_vector_sync', 1 );
+		update_post_meta( $post_id, '_vector_sync_date', current_time( 'Y-m-d H:i:s' ) );
+
+		// Save the returned post_id as _upsert_id
+		if ( null !== $upsert_id ) {
+			update_post_meta( $post_id, '_upsert_id', $upsert_id );
+		}
 
 		return true;
 	}

@@ -112,23 +112,6 @@ class Vector_Sync {
 		$text = $this->prepare_listing_text( $post );
 		$metadata = $this->prepare_listing_metadata( $post_id );
 
-		// Add listing_id to metadata
-		$metadata['listing_id'] = $post_id;
-
-		// Add listing status to metadata
-		$metadata['listing_status'] = $post->post_status;
-
-		// Add meta value for the meta key _ai_blocked
-		$ai_blocked = get_post_meta( $post_id, '_ai_blocked', true );
-		if ( $ai_blocked ) {
-			$metadata['ai_blocked'] = $ai_blocked;
-		}
-
-		// Add website id to metadata
-		// if ( $website_id ) {
-		// 	$metadata['website_id'] = $website_id;
-		// }
-
 		// Check if there's an existing upsert_id
 		$existing_upsert_id = get_post_meta( $post_id, '_upsert_id', true );
 
@@ -245,6 +228,8 @@ class Vector_Sync {
 	private function prepare_listing_metadata( int $post_id ): array {
 		$metadata = array();
 
+		$post = get_post( $post_id );
+
 		// Get listing category - use Directorist constant if available
 		$category_taxonomy = 'at_biz_dir-category';
 		if ( defined( 'ATBDP_CATEGORY' ) ) {
@@ -258,6 +243,19 @@ class Vector_Sync {
 			$metadata['category'] = implode( ', ', $categories );
 		}
 
+		// Get listing location - use Directorist constant if available
+		$location_taxonomy = 'at_biz_dir-location';
+		if ( defined( 'ATBDP_LOCATION' ) ) {
+			$location_taxonomy = ATBDP_LOCATION;
+		}
+
+		$locations = wp_get_post_terms( $post_id, $location_taxonomy, array( 'fields' => 'names' ) );
+		if ( is_wp_error( $locations ) || empty( $locations ) ) {
+			$metadata['location'] = '';
+		} else {
+			$metadata['location'] = implode( ', ', $locations );
+		}
+
 		// Get listing type - use Directorist constant if available
 		$type_taxonomy = 'at_biz_dir_types';
 		if ( defined( 'ATBDP_TYPE' ) ) {
@@ -269,6 +267,18 @@ class Vector_Sync {
 			$metadata['type'] = '';
 		} else {
 			$metadata['type'] = implode( ', ', $types );
+		}
+
+		// Add listing_id to metadata
+		$metadata['listing_id'] = $post_id;
+
+		// Add listing status to metadata
+		$metadata['listing_status'] = $post ? $post->post_status : '';
+
+		// Add meta value for the meta key _ai_blocked
+		$ai_blocked = get_post_meta( $post_id, '_ai_blocked', true );
+		if ( $ai_blocked ) {
+			$metadata['ai_blocked'] = $ai_blocked;
 		}
 
 		return $metadata;

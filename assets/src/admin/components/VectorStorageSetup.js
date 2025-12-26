@@ -1,13 +1,15 @@
 /**
  * WordPress dependencies
  */
-import { useState } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 import {
 	TextControl,
 	ToggleControl,
 	Button,
+	CheckboxControl,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import apiFetch from '@wordpress/api-fetch';
 
 /**
  * Vector Storage Setup Component
@@ -17,12 +19,55 @@ export default function VectorStorageSetup({ settings, onSave }) {
 	const [showSecretKey, setShowSecretKey] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [bulkSyncing, setBulkSyncing] = useState(false);
+	const [directoryTypes, setDirectoryTypes] = useState([]);
+	const [listingStatuses, setListingStatuses] = useState([]);
+	const [loadingOptions, setLoadingOptions] = useState(true);
+
+	useEffect(() => {
+		loadOptions();
+	}, []);
+
+	useEffect(() => {
+		setLocalSettings(settings);
+	}, [settings]);
+
+	const loadOptions = async () => {
+		setLoadingOptions(true);
+		try {
+			const [typesResponse, statusesResponse] = await Promise.all([
+				apiFetch({ path: 'directorist-smart-assistant/v1/directory-types' }),
+				apiFetch({ path: 'directorist-smart-assistant/v1/listing-statuses' }),
+			]);
+			setDirectoryTypes(typesResponse || []);
+			setListingStatuses(statusesResponse || []);
+		} catch (error) {
+			console.error('Error loading options:', error);
+		} finally {
+			setLoadingOptions(false);
+		}
+	};
 
 	const handleChange = (key, value) => {
 		setLocalSettings((prev) => ({
 			...prev,
 			[key]: value,
 		}));
+	};
+
+	const handleCheckboxChange = (key, value, checked) => {
+		setLocalSettings((prev) => {
+			const currentArray = prev[key] || [];
+			let newArray;
+			if (checked) {
+				newArray = [...currentArray, value];
+			} else {
+				newArray = currentArray.filter((item) => item !== value);
+			}
+			return {
+				...prev,
+				[key]: newArray,
+			};
+		});
 	};
 
 	const handleSave = async () => {
@@ -127,6 +172,65 @@ export default function VectorStorageSetup({ settings, onSave }) {
 					</div>
 					<p className="description">
 						{__('Manually sync all existing listings to vector storage', 'directorist-smart-assistant')}
+					</p>
+				</div>
+
+				<div className="vector-storage-setup__field">
+					<TextControl
+						label={__('Listing Chunk Size', 'directorist-smart-assistant')}
+						type="number"
+						value={localSettings.vector_listing_chunk_size || 20}
+						onChange={(value) => handleChange('vector_listing_chunk_size', parseInt(value, 10))}
+						min={1}
+						max={100}
+						step={1}
+						help={__('Number of listings to send per batch during bulk sync', 'directorist-smart-assistant')}
+					/>
+				</div>
+
+				<div className="vector-storage-setup__field">
+					<label>{__('Directory Types', 'directorist-smart-assistant')}</label>
+					{loadingOptions ? (
+						<p>{__('Loading directory types...', 'directorist-smart-assistant')}</p>
+					) : directoryTypes.length > 0 ? (
+						<div style={{ marginTop: '8px', maxHeight: '200px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px' }}>
+							{directoryTypes.map((type) => (
+								<CheckboxControl
+									key={type.id}
+									label={type.name}
+									checked={(localSettings.vector_sync_directory_types || []).includes(type.id)}
+									onChange={(checked) => handleCheckboxChange('vector_sync_directory_types', type.id, checked)}
+								/>
+							))}
+						</div>
+					) : (
+						<p className="description">{__('No directory types found.', 'directorist-smart-assistant')}</p>
+					)}
+					<p className="description">
+						{__('Select which directory types should be synced to vector storage. Leave empty to sync all types.', 'directorist-smart-assistant')}
+					</p>
+				</div>
+
+				<div className="vector-storage-setup__field">
+					<label>{__('Listing Status', 'directorist-smart-assistant')}</label>
+					{loadingOptions ? (
+						<p>{__('Loading listing statuses...', 'directorist-smart-assistant')}</p>
+					) : listingStatuses.length > 0 ? (
+						<div style={{ marginTop: '8px', maxHeight: '200px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '12px' }}>
+							{listingStatuses.map((status) => (
+								<CheckboxControl
+									key={status.value}
+									label={status.label}
+									checked={(localSettings.vector_sync_listing_statuses || []).includes(status.value)}
+									onChange={(checked) => handleCheckboxChange('vector_sync_listing_statuses', status.value, checked)}
+								/>
+							))}
+						</div>
+					) : (
+						<p className="description">{__('No listing statuses found.', 'directorist-smart-assistant')}</p>
+					)}
+					<p className="description">
+						{__('Select which listing statuses should be synced to vector storage. Leave empty to sync all statuses.', 'directorist-smart-assistant')}
 					</p>
 				</div>
 			</div>

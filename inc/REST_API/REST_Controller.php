@@ -117,6 +117,23 @@ class REST_Controller {
 							'type'              => 'boolean',
 							'required'          => false,
 						),
+						'vector_listing_chunk_size' => array(
+							'type'              => 'integer',
+							'required'          => false,
+							'validate_callback' => function( $param ) {
+								return is_numeric( $param ) && $param >= 1 && $param <= 100;
+							},
+						),
+						'vector_sync_directory_types' => array(
+							'type'     => 'array',
+							'required' => false,
+							'default'  => array(),
+						),
+						'vector_sync_listing_statuses' => array(
+							'type'     => 'array',
+							'required' => false,
+							'default'  => array(),
+						),
 						'vector_chunk_size' => array(
 							'type'              => 'integer',
 							'required'          => false,
@@ -206,6 +223,32 @@ class REST_Controller {
 				),
 			)
 		);
+
+		// Directory types endpoint
+		register_rest_route(
+			$this->namespace,
+			'/directory-types',
+			array(
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'get_directory_types' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+				),
+			)
+		);
+
+		// Listing statuses endpoint
+		register_rest_route(
+			$this->namespace,
+			'/listing-statuses',
+			array(
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'get_listing_statuses' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -266,6 +309,15 @@ class REST_Controller {
 		}
 		if ( isset( $params['vector_auto_sync'] ) ) {
 			$settings['vector_auto_sync'] = (bool) $params['vector_auto_sync'];
+		}
+		if ( isset( $params['vector_listing_chunk_size'] ) ) {
+			$settings['vector_listing_chunk_size'] = intval( $params['vector_listing_chunk_size'] );
+		}
+		if ( isset( $params['vector_sync_directory_types'] ) ) {
+			$settings['vector_sync_directory_types'] = array_map( 'intval', $params['vector_sync_directory_types'] );
+		}
+		if ( isset( $params['vector_sync_listing_statuses'] ) ) {
+			$settings['vector_sync_listing_statuses'] = array_map( 'sanitize_text_field', $params['vector_sync_listing_statuses'] );
 		}
 		if ( isset( $params['vector_chunk_size'] ) ) {
 			$settings['vector_chunk_size'] = intval( $params['vector_chunk_size'] );
@@ -680,6 +732,64 @@ class REST_Controller {
 		// Decrypt the secret key (using same method as API key)
 		$settings_manager = Settings_Manager::get_instance();
 		return $settings_manager->decrypt_api_key( $secret_key );
+	}
+
+	/**
+	 * Get directory types
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function get_directory_types( \WP_REST_Request $request ): \WP_REST_Response {
+		$type_taxonomy = defined( 'ATBDP_TYPE' ) ? ATBDP_TYPE : 'at_biz_dir_types';
+		
+		$types = get_terms(
+			array(
+				'taxonomy'   => $type_taxonomy,
+				'hide_empty' => false,
+			)
+		);
+
+		$directory_types = array();
+		if ( ! is_wp_error( $types ) && ! empty( $types ) ) {
+			foreach ( $types as $type ) {
+				$directory_types[] = array(
+					'id'   => $type->term_id,
+					'slug' => $type->slug,
+					'name' => $type->name,
+				);
+			}
+		}
+
+		return new \WP_REST_Response( $directory_types, 200 );
+	}
+
+	/**
+	 * Get listing statuses
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function get_listing_statuses( \WP_REST_Request $request ): \WP_REST_Response {
+		$statuses = get_post_statuses();
+		
+		// Add custom statuses that might be used in Directorist
+		$statuses['expired'] = __( 'Expired', 'directorist-smart-assistant' );
+		$statuses['pending'] = __( 'Pending', 'directorist-smart-assistant' );
+		$statuses['draft']   = __( 'Draft', 'directorist-smart-assistant' );
+		$statuses['publish'] = __( 'Published', 'directorist-smart-assistant' );
+		$statuses['private'] = __( 'Private', 'directorist-smart-assistant' );
+		$statuses['future']  = __( 'Scheduled', 'directorist-smart-assistant' );
+
+		$listing_statuses = array();
+		foreach ( $statuses as $key => $label ) {
+			$listing_statuses[] = array(
+				'value' => $key,
+				'label' => $label,
+			);
+		}
+
+		return new \WP_REST_Response( $listing_statuses, 200 );
 	}
 
 }

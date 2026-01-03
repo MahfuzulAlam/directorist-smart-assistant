@@ -349,4 +349,242 @@ class Vector_Sync {
         //file_put_contents( __DIR__ . '/submission-form-fields-2.json', json_encode( $output ) );
         return trim( $output );
     }
+
+	/**
+	 * Batch upsert listings to vector database
+	 *
+	 * @param array $post_ids Optional array of specific post IDs to sync. If empty, fetches based on settings.
+	 * @return array Array with 'success' count, 'failed' count, 'total' count, and 'errors'.
+	 */
+	public function batch_upsert_listings( array $post_ids = array() ): array {
+		$settings = Settings_Manager::get_instance()->get_settings();
+		$api_base_url = rtrim( $settings['vector_api_base_url'] ?? '', '/' );
+		$api_secret_key = $this->get_decrypted_secret_key();
+		$website_id = $settings['vector_website_id'] ?? '';
+		$chunk_size = intval( $settings['vector_listing_chunk_size'] ?? 20 );
+
+		if ( empty( $api_base_url ) || empty( $api_secret_key ) ) {
+			return array(
+				'success' => 0,
+				'failed'  => 0,
+				'total'   => 0,
+				'errors'  => array( __( 'Vector storage API credentials are not configured.', 'directorist-smart-assistant' ) ),
+			);
+		}
+
+		// Get listings if post_ids not provided
+		if ( empty( $post_ids ) ) {
+			$post_ids = $this->get_listings_for_sync();
+		}
+
+		if ( empty( $post_ids ) ) {
+			return array(
+				'success' => 0,
+				'failed'  => 0,
+				'total'   => 0,
+				'errors'  => array( __( 'No listings found to sync.', 'directorist-smart-assistant' ) ),
+			);
+		}
+
+		$results = array(
+			'success' => 0,
+			'failed'  => 0,
+			'total'   => count( $post_ids ),
+			'errors'  => array(),
+		);
+
+		// Process in batches
+		$batches = array_chunk( $post_ids, $chunk_size );
+
+		foreach ( $batches as $batch_index => $batch ) {
+			$contents = array();
+
+			foreach ( $batch as $post_id ) {
+				$post = get_post( $post_id );
+
+				if ( ! $post ) {
+					$results['failed']++;
+					$results['errors'][] = sprintf(
+						/* translators: %d: Post ID */
+						__( 'Post ID %d not found.', 'directorist-smart-assistant' ),
+						$post_id
+					);
+					continue;
+				}
+
+				// Prepare data for this listing (same as upsert_listing)
+				$text = $this->prepare_listing_text( $post );
+				$metadata = $this->prepare_listing_metadata( $post_id );
+
+				// Check if there's an existing upsert_id
+				$existing_upsert_id = get_post_meta( $post_id, '_upsert_id', true );
+
+				$content_item = array(
+					'text'     => $text,
+					'metadata' => $metadata,
+				);
+
+				// If upsert_id exists, pass it as post_id for update
+				if ( ! empty( $existing_upsert_id ) ) {
+					$content_item['post_id'] = $existing_upsert_id;
+				}
+
+				$contents[] = $content_item;
+			}
+
+			if ( empty( $contents ) ) {
+				continue;
+			}
+
+			// Make batch API request
+			$url = $api_base_url . '/api/v1/vectors/upsert/batch';
+
+			$headers = array(
+				'X-API-Key'    => $api_secret_key,
+				'Content-Type' => 'application/json',
+			);
+
+			// Add Website ID header if configured
+			if ( ! empty( $website_id ) ) {
+				$headers['X-Website-ID'] = $website_id;
+			}
+
+			$request_body = array(
+				'contents' => $contents,
+			);
+
+			$response = wp_remote_post(
+				$url,
+				array(
+					'headers' => $headers,
+					'body'    => wp_json_encode( $request_body ),
+					'timeout' => 120, // Longer timeout for batch operations
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				$error_message = $response->get_error_message();
+				error_log( 'Vector Batch Sync Error: ' . $error_message );
+				$results['failed'] += count( $batch );
+				$results['errors'][] = sprintf(
+					/* translators: %d: Batch number, %s: Error message */
+					__( 'Batch %d: %s', 'directorist-smart-assistant' ),
+					$batch_index + 1,
+					$error_message
+				);
+				continue;
+			}
+
+			$response_code = wp_remote_retrieve_response_code( $response );
+			$response_body = wp_remote_retrieve_body( $response );
+
+			if ( 200 !== $response_code && 201 !== $response_code ) {
+				$error_message = sprintf(
+					/* translators: %d: HTTP status code */
+					__( 'Vector storage API returned error code %d.', 'directorist-smart-assistant' ),
+					$response_code
+				);
+				error_log( 'Vector Batch Sync Error: ' . $error_message . ' - ' . $response_body );
+				$results['failed'] += count( $batch );
+				$results['errors'][] = sprintf(
+					/* translators: %d: Batch number */
+					__( 'Batch %d: %s', 'directorist-smart-assistant' ),
+					$batch_index + 1,
+					$error_message
+				);
+				continue;
+			}
+
+			// Parse response
+			$response_data = json_decode( $response_body, true );
+
+			// Process response and update post meta
+			if ( isset( $response_data['results'] ) && is_array( $response_data['results'] ) ) {
+				foreach ( $response_data['results'] as $index => $result ) {
+					$post_id = $batch[ $index ] ?? null;
+
+					if ( ! $post_id ) {
+						continue;
+					}
+
+					if ( isset( $result['vector_id'] ) || isset( $result['post_id'] ) ) {
+						$upsert_id = $result['vector_id'] ?? $result['post_id'] ?? null;
+
+						if ( $upsert_id ) {
+							update_post_meta( $post_id, '_vector_sync', 1 );
+							update_post_meta( $post_id, '_vector_sync_date', current_time( 'Y-m-d H:i:s' ) );
+							update_post_meta( $post_id, '_upsert_id', $upsert_id );
+							$results['success']++;
+						} else {
+							$results['failed']++;
+						}
+					} else {
+						$results['failed']++;
+						if ( isset( $result['error'] ) ) {
+							$results['errors'][] = sprintf(
+								/* translators: %d: Post ID, %s: Error message */
+								__( 'Post ID %d: %s', 'directorist-smart-assistant' ),
+								$post_id,
+								$result['error']
+							);
+						}
+					}
+				}
+			} else {
+				// If response format is different, assume all succeeded
+				$results['success'] += count( $batch );
+				// Update post meta for all in batch
+				foreach ( $batch as $post_id ) {
+					update_post_meta( $post_id, '_vector_sync', 1 );
+					update_post_meta( $post_id, '_vector_sync_date', current_time( 'Y-m-d H:i:s' ) );
+				}
+			}
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Get listings for sync based on settings filters
+	 *
+	 * @return array Array of post IDs
+	 */
+	private function get_listings_for_sync(): array {
+		$settings = Settings_Manager::get_instance()->get_settings();
+		$post_type = defined( 'ATBDP_POST_TYPE' ) ? ATBDP_POST_TYPE : 'at_biz_dir';
+
+		// Build query args
+		$args = array(
+			'post_type'      => $post_type,
+			'posts_per_page' => -1,
+			'post_status'    => 'any',
+			'fields'         => 'ids',
+		);
+
+		// Filter by directory types if specified
+		$directory_types = $settings['vector_sync_directory_types'] ?? array();
+		if ( ! empty( $directory_types ) && is_array( $directory_types ) ) {
+			$type_taxonomy = defined( 'ATBDP_TYPE' ) ? ATBDP_TYPE : 'at_biz_dir_types';
+			$args['tax_query'] = array(
+				array(
+					'taxonomy' => $type_taxonomy,
+					'field'    => 'term_id',
+					'terms'    => array_map( 'intval', $directory_types ),
+					'operator' => 'IN',
+				),
+			);
+		}
+
+		// Filter by listing statuses if specified
+		$listing_statuses = $settings['vector_sync_listing_statuses'] ?? array();
+		if ( ! empty( $listing_statuses ) && is_array( $listing_statuses ) ) {
+			$args['post_status'] = array_map( 'sanitize_text_field', $listing_statuses );
+		} else {
+			// Default: only published listings
+			$args['post_status'] = 'publish';
+		}
+
+		$query = new \WP_Query( $args );
+		return $query->get_posts();
+	}
 }

@@ -80,13 +80,32 @@ export default function VectorStorageSetup({ settings, onSave }) {
 	};
 
 	const handleBulkSync = async () => {
+		if (!confirm(__('Are you sure you want to sync all listings? This may take a while.', 'directorist-smart-assistant'))) {
+			return;
+		}
+
 		setBulkSyncing(true);
 		try {
-			// TODO: Implement bulk sync functionality
-			// For now, just show a message
-			alert(__('Bulk sync functionality will be implemented soon.', 'directorist-smart-assistant'));
+			const response = await apiFetch({
+				path: 'directorist-smart-assistant/v1/bulk-sync',
+				method: 'POST',
+				data: {
+					post_ids: [], // Empty array means sync all listings based on settings
+				},
+			});
+
+			if (response.success) {
+				const message = response.message || __('Bulk sync completed successfully!', 'directorist-smart-assistant');
+				if (response.results && response.results.errors && response.results.errors.length > 0) {
+					console.warn('Bulk sync errors:', response.results.errors);
+				}
+				alert(message);
+			} else {
+				alert(response.message || __('Bulk sync failed. Please try again.', 'directorist-smart-assistant'));
+			}
 		} catch (error) {
 			console.error('Bulk sync error:', error);
+			alert(error.message || __('An error occurred during bulk sync. Please check the console for details.', 'directorist-smart-assistant'));
 		} finally {
 			setBulkSyncing(false);
 		}

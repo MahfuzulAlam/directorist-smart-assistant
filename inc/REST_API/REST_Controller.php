@@ -9,6 +9,7 @@ namespace DirectoristSmartAssistant\REST_API;
 
 use DirectoristSmartAssistant\Settings\Settings_Manager;
 use DirectoristSmartAssistant\Vector\Vector_Query;
+use DirectoristSmartAssistant\Vector\Vector_Sync;
 
 /**
  * REST API Controller class
@@ -246,6 +247,26 @@ class REST_Controller {
 					'methods'             => 'GET',
 					'callback'            => array( $this, 'get_listing_statuses' ),
 					'permission_callback' => array( $this, 'check_permission' ),
+				),
+			)
+		);
+
+		// Bulk sync endpoint
+		register_rest_route(
+			$this->namespace,
+			'/bulk-sync',
+			array(
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( $this, 'handle_bulk_sync' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+					'args'                => array(
+						'post_ids' => array(
+							'type'     => 'array',
+							'required' => false,
+							'default'  => array(),
+						),
+					),
 				),
 			)
 		);
@@ -516,6 +537,8 @@ class REST_Controller {
 		$top_k = 3; // Get top 10 relevant listings
 		$query_results = $vector_query->query( $query_text, $top_k );
 
+		//file_put_contents( __DIR__ . '/vector-query-results.json', json_encode( $query_results ) );
+
 		if ( is_wp_error( $query_results ) ) {
 			// Fallback to direct query if vector query fails
 			return $this->get_listings_context_fallback();
@@ -523,6 +546,8 @@ class REST_Controller {
 
 		// Get listings from query results
 		$listings = $vector_query->get_listings_from_query_results( $query_results );
+
+		//file_put_contents( __DIR__ . '/listings-from-query-results.json', json_encode( $listings ) );
 
 		// Format as context string
 		$context = '';
@@ -535,6 +560,8 @@ class REST_Controller {
 				isset( $listing['submission_form_fields'] ) ? $listing['submission_form_fields'] : ''
 			);
 		}
+
+		//file_put_contents( __DIR__ . '/listings-context.json', json_encode( $listings ) );
 
 		return $context;
 	}
@@ -549,10 +576,15 @@ class REST_Controller {
 		$context  = '';
 
 		foreach ( $listings as $listing ) {
+			$url = '';
+			if ( isset( $listing['id'] ) ) {
+				$url = get_permalink( $listing['id'] );
+			}
 			$context .= sprintf(
-				"Title: %s\nContent: %s\n\n",
+				"Title: %s\nContent: %s\nURL: %s\n\n",
 				$listing['title'],
-				wp_strip_all_tags( $listing['content'] )
+				wp_strip_all_tags( $listing['content'] ),
+				$url
 			);
 		}
 
@@ -790,6 +822,48 @@ class REST_Controller {
 		}
 
 		return new \WP_REST_Response( $listing_statuses, 200 );
+	}
+
+	/**
+	 * Handle bulk sync request
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function handle_bulk_sync( \WP_REST_Request $request ): \WP_REST_Response {
+		$params = $request->get_json_params();
+		$post_ids = isset( $params['post_ids'] ) ? array_map( 'intval', $params['post_ids'] ) : array();
+
+		$vector_sync = Vector_Sync::get_instance();
+		$results = $vector_sync->batch_upsert_listings( $post_ids );
+
+		if ( $results['total'] === 0 ) {
+			return new \WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => $results['errors'][0] ?? __( 'No listings found to sync.', 'directorist-smart-assistant' ),
+					'results' => $results,
+				),
+				400
+			);
+		}
+
+		$message = sprintf(
+			/* translators: %1$d: Success count, %2$d: Failed count, %3$d: Total count */
+			__( 'Synced %1$d out of %3$d listings successfully. %2$d failed.', 'directorist-smart-assistant' ),
+			$results['success'],
+			$results['failed'],
+			$results['total']
+		);
+
+		return new \WP_REST_Response(
+			array(
+				'success' => true,
+				'message' => $message,
+				'results' => $results,
+			),
+			200
+		);
 	}
 
 }

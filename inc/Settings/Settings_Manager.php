@@ -170,24 +170,41 @@ class Settings_Manager {
 			return '';
 		}
 
-		// Check if it's already decrypted (legacy or fallback)
+		// Check if it's already decrypted (legacy or fallback).
 		if ( strpos( $encrypted_api_key, 'sk-' ) === 0 ) {
 			return $encrypted_api_key;
 		}
 
 		if ( ! function_exists( 'openssl_decrypt' ) ) {
-			// Fallback to base64 decode
-			return base64_decode( $encrypted_api_key ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+			$decoded = base64_decode( $encrypted_api_key ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+			return ( false !== $decoded ) ? $decoded : '';
 		}
 
-		$key = $this->get_encryption_key();
+		$key  = $this->get_encryption_key();
 		$data = base64_decode( $encrypted_api_key ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 
-		$iv_length = openssl_cipher_iv_length( 'AES-256-CBC' );
-		$iv = substr( $data, 0, $iv_length );
-		$encrypted = substr( $data, $iv_length );
+		if ( false === $data ) {
+			error_log( 'Directorist Smart Assistant: Failed to base64-decode API key.' );
+			return '';
+		}
 
-		return openssl_decrypt( $encrypted, 'AES-256-CBC', $key, 0, $iv );
+		$iv_length = openssl_cipher_iv_length( 'AES-256-CBC' );
+
+		if ( strlen( $data ) <= $iv_length ) {
+			error_log( 'Directorist Smart Assistant: Encrypted API key data is too short.' );
+			return '';
+		}
+
+		$iv        = substr( $data, 0, $iv_length );
+		$encrypted = substr( $data, $iv_length );
+		$decrypted = openssl_decrypt( $encrypted, 'AES-256-CBC', $key, 0, $iv );
+
+		if ( false === $decrypted ) {
+			error_log( 'Directorist Smart Assistant: Failed to decrypt API key.' );
+			return '';
+		}
+
+		return $decrypted;
 	}
 
 	/**

@@ -7,6 +7,8 @@
 
 namespace DirectoristSmartAssistant\Frontend;
 
+use DirectoristSmartAssistant\Settings\Settings_Manager;
+
 /**
  * Frontend Enqueuer class
  */
@@ -40,13 +42,36 @@ class Enqueuer {
 	}
 
 	/**
+	 * Whether the chat widget should be loaded on the current page.
+	 *
+	 * @return bool
+	 */
+	private function should_load_widget(): bool {
+		$settings       = Settings_Manager::get_instance()->get_settings();
+		$api_base_url   = $settings['vector_api_base_url'] ?? '';
+		$api_secret_key = $settings['vector_api_secret_key'] ?? '';
+
+		// Don't load if vector API is not configured.
+		if ( empty( $api_base_url ) || empty( $api_secret_key ) ) {
+			return false;
+		}
+
+		/** Filter whether the chat widget should be loaded on the current page. */
+		return (bool) apply_filters( 'dsa_chat_widget_enabled', true );
+	}
+
+	/**
 	 * Enqueue frontend scripts and styles
 	 *
 	 * @return void
 	 */
 	public function enqueue(): void {
+		if ( ! $this->should_load_widget() ) {
+			return;
+		}
+
 		$asset_path = DIRECTORIST_SMART_ASSISTANT_PLUGIN_DIR . 'assets/build/chat-widget.asset.php';
-		
+
 		if ( ! file_exists( $asset_path ) ) {
 			return;
 		}
@@ -68,19 +93,17 @@ class Enqueuer {
 			$asset_file['version'] ?? DIRECTORIST_SMART_ASSISTANT_VERSION
 		);
 
-		// Get chat widget settings
-		$settings = \DirectoristSmartAssistant\Settings\Settings_Manager::get_instance()->get_settings();
+		$settings = Settings_Manager::get_instance()->get_settings();
 
-		// Localize script
 		wp_localize_script(
 			'directorist-smart-assistant-chat-widget',
 			'directoristSmartAssistantChat',
 			array(
-				'apiUrl' => rest_url( 'directorist-smart-assistant/v1/' ),
-				'nonce'  => wp_create_nonce( 'wp_rest' ),
+				'apiUrl'   => rest_url( 'directorist-smart-assistant/v1/' ),
+				'nonce'    => wp_create_nonce( 'wp_rest' ),
 				'settings' => array(
-					'position' => $settings['chat_widget_position'] ?? 'bottom-right',
-					'color'    => $settings['chat_widget_color'] ?? '#667eea',
+					'position'  => $settings['chat_widget_position'] ?? 'bottom-right',
+					'color'     => $settings['chat_widget_color'] ?? '#667eea',
 					'agentName' => $settings['chat_agent_name'] ?? '',
 				),
 			)
@@ -93,9 +116,11 @@ class Enqueuer {
 	 * @return void
 	 */
 	public function render_chat_widget(): void {
+		if ( ! $this->should_load_widget() ) {
+			return;
+		}
 		?>
 		<div id="directorist-smart-assistant-chat-root"></div>
 		<?php
 	}
 }
-

@@ -87,25 +87,14 @@ class Enqueuer {
 	private function get_settings_for_js(): array {
 		$settings = \DirectoristSmartAssistant\Settings\Settings_Manager::get_instance()->get_settings();
 
-		// Mask API key
 		if ( ! empty( $settings['api_key'] ) ) {
-			$settings['api_key'] = $this->mask_api_key( $settings['api_key'] );
+			$settings['api_key'] = 'sk-***';
+		}
+		if ( ! empty( $settings['vector_api_secret_key'] ) ) {
+			$settings['vector_api_secret_key'] = '***';
 		}
 
 		return $settings;
-	}
-
-	/**
-	 * Mask API key
-	 *
-	 * @param string $api_key API key.
-	 * @return string
-	 */
-	private function mask_api_key( string $api_key ): string {
-		if ( empty( $api_key ) ) {
-			return '';
-		}
-		return 'sk-***';
 	}
 }
 

@@ -14,18 +14,15 @@
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
-// Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Define plugin constants
 define( 'DIRECTORIST_SMART_ASSISTANT_VERSION', '1.0.0' );
 define( 'DIRECTORIST_SMART_ASSISTANT_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'DIRECTORIST_SMART_ASSISTANT_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'DIRECTORIST_SMART_ASSISTANT_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
-// Autoloader
 require_once DIRECTORIST_SMART_ASSISTANT_PLUGIN_DIR . 'vendor/autoload.php';
 
 /**
@@ -65,10 +62,7 @@ final class Directorist_Smart_Assistant {
 	 * @return void
 	 */
 	private function init(): void {
-		// Check if Directorist is active
 		add_action( 'admin_notices', array( $this, 'check_directorist_dependency' ) );
-
-		// Initialize components
 		add_action( 'plugins_loaded', array( $this, 'load_components' ), 10 );
 	}
 
@@ -100,24 +94,42 @@ final class Directorist_Smart_Assistant {
 	 * @return void
 	 */
 	public function load_components(): void {
-		// Only proceed if Directorist is active
 		if ( ! class_exists( 'Directorist_Base' ) ) {
 			return;
 		}
 
-		// Load REST API
 		DirectoristSmartAssistant\REST_API\REST_Controller::get_instance();
-
-		// Load Admin
 		DirectoristSmartAssistant\Admin\Admin_Menu::get_instance();
-
-		// Load Frontend
 		DirectoristSmartAssistant\Frontend\Enqueuer::get_instance();
-
-		// Load Vector Sync
 		DirectoristSmartAssistant\Vector\Vector_Sync::get_instance();
 	}
+
+	/**
+	 * Plugin activation callback.
+	 *
+	 * @return void
+	 */
+	public static function activate(): void {
+		/** Fires when the plugin is activated. */
+		do_action( 'dsa_plugin_activated' );
+	}
+
+	/**
+	 * Plugin deactivation callback.
+	 *
+	 * @return void
+	 */
+	public static function deactivate(): void {
+		// Clean up transients.
+		delete_transient( 'directorist_smart_assistant_listings' );
+
+		/** Fires when the plugin is deactivated. */
+		do_action( 'dsa_plugin_deactivated' );
+	}
 }
+
+register_activation_hook( __FILE__, array( 'Directorist_Smart_Assistant', 'activate' ) );
+register_deactivation_hook( __FILE__, array( 'Directorist_Smart_Assistant', 'deactivate' ) );
 
 /**
  * Initialize plugin
@@ -128,6 +140,4 @@ function directorist_smart_assistant() {
 	return Directorist_Smart_Assistant::get_instance();
 }
 
-// Start the plugin
 directorist_smart_assistant();
-

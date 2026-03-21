@@ -1,36 +1,58 @@
 /**
  * WordPress dependencies
  */
-import { createRoot,useState, useRef, useEffect } from '@wordpress/element';
+import { createRoot, useState, useRef, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-
 
 /**
  * Styles
  */
 import './index.css';
 
+const STORAGE_KEY = 'dsa_chat_conversation';
+
 /**
- * Convert markdown-like text to HTML
- * Converts markdown links [text](url) to HTML links
- * Converts bold text **text** to <strong>
- * Converts bullet points (- item) to HTML lists
- * Converts numbered lists to HTML ordered lists
+ * Load persisted conversation from sessionStorage.
  *
- * @param {string} text The text to convert
- * @return {string} HTML string
+ * @return {Array} Saved messages or empty array.
+ */
+function loadConversation() {
+	try {
+		const raw = sessionStorage.getItem(STORAGE_KEY);
+		return raw ? JSON.parse(raw) : [];
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * Persist conversation to sessionStorage.
+ *
+ * @param {Array} messages Messages to persist.
+ */
+function saveConversation(messages) {
+	try {
+		sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+	} catch {
+		// Storage full or unavailable — silently ignore.
+	}
+}
+
+/**
+ * Convert markdown-like text to HTML.
+ *
+ * @param {string} text The text to convert.
+ * @return {string} HTML string.
  */
 function formatMessageContent(text) {
 	if (!text) return '';
 
-	// Escape HTML to prevent XSS
 	const escapeHtml = (str) => {
 		const div = document.createElement('div');
 		div.textContent = str;
 		return div.innerHTML;
 	};
 
-	// Split text into lines for better processing
 	const lines = text.split('\n');
 	const processedLines = [];
 	let inList = false;
@@ -54,85 +76,54 @@ function formatMessageContent(text) {
 		inBulletList = false;
 	};
 
-	// Process each line
 	for (let i = 0; i < lines.length; i++) {
-		let line = lines[i];
-		const trimmedLine = line.trim();
-		
-		// Check if line is a numbered list item (1. text or 1) text)
-		const listMatch = trimmedLine.match(/^(\d+)[\.\)]\s+(.+)$/);
-		
-		// Check if line is a bullet point (- text or * text)
-		const bulletMatch = trimmedLine.match(/^[-*]\s+(.+)$/);
-		
-		if (listMatch) {
-			// Flush bullet list if we were in one
-			if (inBulletList) {
-				flushBulletList();
-			}
+		const trimmedLine = lines[i].trim();
 
-			const itemContent = listMatch[2];
-			let processedContent = processInlineMarkdown(itemContent);
-			listItems.push(`<li>${processedContent}</li>`);
+		const listMatch = trimmedLine.match(/^(\d+)[.)]\s+(.+)$/);
+		const bulletMatch = trimmedLine.match(/^[-*]\s+(.+)$/);
+
+		if (listMatch) {
+			if (inBulletList) flushBulletList();
+			listItems.push(`<li>${processInlineMarkdown(listMatch[2])}</li>`);
 			inList = true;
 		} else if (bulletMatch) {
-			// Flush numbered list if we were in one
-			if (inList) {
-				flushList();
-			}
-
-			const itemContent = bulletMatch[1];
-			let processedContent = processInlineMarkdown(itemContent);
-			bulletItems.push(`<li>${processedContent}</li>`);
+			if (inList) flushList();
+			bulletItems.push(`<li>${processInlineMarkdown(bulletMatch[1])}</li>`);
 			inBulletList = true;
 		} else {
-			// Flush lists if we were in one
-			if (inList) {
-				flushList();
-			}
-			if (inBulletList) {
-				flushBulletList();
-			}
-			
-			// Process regular line
+			if (inList) flushList();
+			if (inBulletList) flushBulletList();
+
 			if (trimmedLine) {
-				let processedLine = processInlineMarkdown(trimmedLine);
-				processedLines.push(processedLine);
+				processedLines.push(processInlineMarkdown(trimmedLine));
 			} else {
 				processedLines.push('');
 			}
 		}
 	}
 
-	// Flush any remaining lists
 	flushList();
 	flushBulletList();
 
-	// Join lines with <br> tags
-	let joinedLines = processedLines.map(line => line || '<br>').join('<br>');
-
-	// Replace multiple consecutive <br> tags with a single <br>
-	const result = joinedLines.replace(/(<br>\s*){2,}/g, '<br>');
-	return result;
+	let joinedLines = processedLines.map((line) => line || '<br>').join('<br>');
+	return joinedLines.replace(/(<br>\s*){2,}/g, '<br>');
 }
 
 /**
- * Process inline markdown (bold, links) in text
+ * Process inline markdown (bold, links) in text.
  *
- * @param {string} text The text to process
- * @return {string} HTML string
+ * @param {string} text The text to process.
+ * @return {string} HTML string.
  */
 function processInlineMarkdown(text) {
 	if (!text) return '';
 
-	// Escape HTML to prevent XSS
 	const escapeHtml = (str) => {
 		const div = document.createElement('div');
 		div.textContent = str;
 		return div.innerHTML;
 	};
 
-	// Replace markdown links with placeholders first
 	const linkPlaceholders = [];
 	let linkIndex = 0;
 	let processedText = text.replace(
@@ -145,7 +136,6 @@ function processInlineMarkdown(text) {
 		}
 	);
 
-	// Replace bold text **text** with placeholders
 	const boldPlaceholders = [];
 	let boldIndex = 0;
 	processedText = processedText.replace(
@@ -158,19 +148,20 @@ function processInlineMarkdown(text) {
 		}
 	);
 
-	// Escape HTML
 	processedText = escapeHtml(processedText);
 
-	// Restore bold text
 	boldPlaceholders.forEach(({ placeholder, boldText }) => {
-		const boldHtml = `<strong>${escapeHtml(boldText)}</strong>`;
-		processedText = processedText.replace(escapeHtml(placeholder), boldHtml);
+		processedText = processedText.replace(
+			escapeHtml(placeholder),
+			`<strong>${escapeHtml(boldText)}</strong>`
+		);
 	});
 
-	// Restore links as HTML
 	linkPlaceholders.forEach(({ placeholder, linkText, url }) => {
-		const linkHtml = `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="directorist-smart-assistant-chat-link">${escapeHtml(linkText)}</a>`;
-		processedText = processedText.replace(escapeHtml(placeholder), linkHtml);
+		processedText = processedText.replace(
+			escapeHtml(placeholder),
+			`<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="directorist-smart-assistant-chat-link">${escapeHtml(linkText)}</a>`
+		);
 	});
 
 	return processedText;
@@ -181,27 +172,25 @@ function processInlineMarkdown(text) {
  */
 function ChatWidget() {
 	const [isOpen, setIsOpen] = useState(false);
-	const [messages, setMessages] = useState([]);
+	const [messages, setMessages] = useState(() => loadConversation());
 	const [inputValue, setInputValue] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
 	const messagesEndRef = useRef(null);
 	const inputRef = useRef(null);
 
-	// Get settings from localized data
 	const widgetSettings = window.directoristSmartAssistantChat?.settings || {
 		position: 'bottom-right',
 		color: '#667eea',
 		agentName: '',
 	};
 
-	// Get agent name or default
 	const agentName = widgetSettings.agentName || 'Smart Assistant';
+	const positionClass =
+		widgetSettings.position === 'bottom-left'
+			? 'directorist-smart-assistant-chat-widget--left'
+			: '';
 
-	// Apply position class
-	const positionClass = widgetSettings.position === 'bottom-left' ? 'directorist-smart-assistant-chat-widget--left' : '';
-
-	// Generate CSS variables for color
 	const colorStyle = {
 		'--chat-primary-color': widgetSettings.color,
 	};
@@ -220,6 +209,11 @@ function ChatWidget() {
 		}
 	}, [isOpen]);
 
+	// Persist conversation whenever messages change.
+	useEffect(() => {
+		saveConversation(messages);
+	}, [messages]);
+
 	const handleSend = async () => {
 		if (!inputValue.trim() || loading) {
 			return;
@@ -229,7 +223,6 @@ function ChatWidget() {
 		setInputValue('');
 		setError(null);
 
-		// Add user message
 		const newMessages = [
 			...messages,
 			{ role: 'user', content: userMessage },
@@ -262,7 +255,7 @@ function ChatWidget() {
 		}
 	};
 
-	const handleKeyPress = (e) => {
+	const handleKeyDown = (e) => {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
 			handleSend();
@@ -270,7 +263,10 @@ function ChatWidget() {
 	};
 
 	return (
-		<div className={`directorist-smart-assistant-chat-widget ${positionClass}`} style={colorStyle}>
+		<div
+			className={`directorist-smart-assistant-chat-widget ${positionClass}`}
+			style={colorStyle}
+		>
 			{isOpen && (
 				<div className="directorist-smart-assistant-chat-window">
 					<div className="directorist-smart-assistant-chat-header">
@@ -302,10 +298,9 @@ function ChatWidget() {
 						{messages.length === 0 && (
 							<div className="directorist-smart-assistant-chat-welcome">
 								<p>
-									{agentName && agentName !== 'Smart Assistant' 
+									{agentName && agentName !== 'Smart Assistant'
 										? `Hello! I'm ${agentName}, your AI assistant. How can I help you today?`
-										: "Hello! I'm your AI assistant. How can I help you today?"
-									}
+										: "Hello! I'm your AI assistant. How can I help you today?"}
 								</p>
 							</div>
 						)}
@@ -318,12 +313,18 @@ function ChatWidget() {
 								<div
 									className="directorist-smart-assistant-chat-message-content"
 									dangerouslySetInnerHTML={
-										message.role === 'assistant' 
-											? { __html: formatMessageContent(message.content) }
+										message.role === 'assistant'
+											? {
+													__html: formatMessageContent(
+														message.content
+													),
+												}
 											: undefined
 									}
 								>
-									{message.role === 'user' ? message.content : null}
+									{message.role === 'user'
+										? message.content
+										: null}
 								</div>
 							</div>
 						))}
@@ -355,7 +356,7 @@ function ChatWidget() {
 							className="directorist-smart-assistant-chat-input"
 							value={inputValue}
 							onChange={(e) => setInputValue(e.target.value)}
-							onKeyPress={handleKeyPress}
+							onKeyDown={handleKeyDown}
 							placeholder="Type your message..."
 							rows={1}
 							disabled={loading}
@@ -409,10 +410,11 @@ function ChatWidget() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Mount only if the target element exists
-    const container = document.getElementById('directorist-smart-assistant-chat-root');
-    if (container) {
-        const root = createRoot(container);
-        root.render(<ChatWidget />);
-    }
+	const container = document.getElementById(
+		'directorist-smart-assistant-chat-root'
+	);
+	if (container) {
+		const root = createRoot(container);
+		root.render(<ChatWidget />);
+	}
 });

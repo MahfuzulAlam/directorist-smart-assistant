@@ -74,6 +74,14 @@ class Settings_Manager {
 			'chat_agent_name'        => '',
 			'chat_widget_position'   => 'bottom-right',
 			'chat_widget_color'      => '#667eea',
+			// Page chat settings
+			'page_chat_enabled'          => false,
+			'page_chat_title'            => 'Chat Assistant',
+			'page_chat_welcome_message'  => '',
+			'page_chat_placeholder'      => 'Type a message...',
+			'page_chat_primary_color'    => '#667eea',
+			'page_chat_show_sidebar'     => true,
+			'page_chat_guest_enabled'    => true,
 		);
 
 		$settings = get_option( $this->option_name, array() );

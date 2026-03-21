@@ -326,6 +326,26 @@ class REST_Controller {
 			$settings['chat_widget_color'] = sanitize_hex_color( $params['chat_widget_color'] );
 		}
 
+		// Page chat settings.
+		if ( isset( $params['page_chat_enabled'] ) ) {
+			$settings['page_chat_enabled'] = (bool) $params['page_chat_enabled'];
+		}
+		$page_text_fields = array( 'page_chat_title', 'page_chat_welcome_message', 'page_chat_placeholder' );
+		foreach ( $page_text_fields as $f ) {
+			if ( isset( $params[ $f ] ) ) {
+				$settings[ $f ] = sanitize_text_field( $params[ $f ] );
+			}
+		}
+		if ( isset( $params['page_chat_primary_color'] ) ) {
+			$settings['page_chat_primary_color'] = sanitize_hex_color( $params['page_chat_primary_color'] );
+		}
+		if ( isset( $params['page_chat_show_sidebar'] ) ) {
+			$settings['page_chat_show_sidebar'] = (bool) $params['page_chat_show_sidebar'];
+		}
+		if ( isset( $params['page_chat_guest_enabled'] ) ) {
+			$settings['page_chat_guest_enabled'] = (bool) $params['page_chat_guest_enabled'];
+		}
+
 		Settings_Manager::get_instance()->save_settings( $settings );
 
 		return new \WP_REST_Response(

@@ -5,6 +5,7 @@ module.exports = {
 	entry: {
 		'admin': './assets/src/admin/index.js',
 		'chat-widget': './assets/src/chat-widget/index.js',
+		'chat-page': './assets/src/chat-page/index.js',
 	},
 	output: {
 		...defaultConfig.output,
@@ -15,4 +16,3 @@ module.exports = {
 		minimize: process.env.NODE_ENV === 'production' || process.env.NODE_ENV === undefined,
 	},
 };
-

@@ -64,6 +64,9 @@ final class Directorist_Smart_Assistant {
 	private function init(): void {
 		add_action( 'admin_notices', array( $this, 'check_directorist_dependency' ) );
 		add_action( 'plugins_loaded', array( $this, 'load_components' ), 10 );
+
+		// Ensure DB tables are up-to-date on admin requests.
+		add_action( 'admin_init', array( 'DirectoristSmartAssistant\Provider\Schema', 'maybe_upgrade' ) );
 	}
 
 	/**
@@ -98,9 +101,20 @@ final class Directorist_Smart_Assistant {
 			return;
 		}
 
+		// REST APIs.
 		DirectoristSmartAssistant\REST_API\REST_Controller::get_instance();
+		DirectoristSmartAssistant\REST_API\Chat_API_Controller::get_instance();
+
+		// Admin.
 		DirectoristSmartAssistant\Admin\Admin_Menu::get_instance();
+
+		// Frontend.
 		DirectoristSmartAssistant\Frontend\Enqueuer::get_instance();
+
+		// Shortcode.
+		DirectoristSmartAssistant\Shortcode\Chat_Page::get_instance();
+
+		// Vector Sync.
 		DirectoristSmartAssistant\Vector\Vector_Sync::get_instance();
 	}
 
@@ -110,6 +124,8 @@ final class Directorist_Smart_Assistant {
 	 * @return void
 	 */
 	public static function activate(): void {
+		DirectoristSmartAssistant\Provider\Schema::create_tables();
+
 		/** Fires when the plugin is activated. */
 		do_action( 'dsa_plugin_activated' );
 	}
@@ -120,7 +136,6 @@ final class Directorist_Smart_Assistant {
 	 * @return void
 	 */
 	public static function deactivate(): void {
-		// Clean up transients.
 		delete_transient( 'directorist_smart_assistant_listings' );
 
 		/** Fires when the plugin is deactivated. */

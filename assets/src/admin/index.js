@@ -19,6 +19,7 @@ import './index.css';
 import ChatAgentSetup from './components/ChatAgentSetup';
 import VectorStorageSetup from './components/VectorStorageSetup';
 import ChatModuleSettings from './components/ChatModuleSettings';
+import ChatPageSettings from './components/ChatPageSettings';
 
 /**
  * Admin App Component
@@ -47,6 +48,14 @@ function AdminApp() {
 		chat_agent_name: '',
 		chat_widget_position: 'bottom-right',
 		chat_widget_color: '#667eea',
+		// Page chat settings
+		page_chat_enabled: false,
+		page_chat_title: 'Chat Assistant',
+		page_chat_welcome_message: '',
+		page_chat_placeholder: 'Type a message...',
+		page_chat_primary_color: '#667eea',
+		page_chat_show_sidebar: true,
+		page_chat_guest_enabled: true,
 	});
 	const [loading, setLoading] = useState(true);
 	const [notice, setNotice] = useState(null);
@@ -123,7 +132,11 @@ function AdminApp() {
 					},
 					{
 						name: 'chat-module',
-						title: 'Chat Module Settings',
+						title: 'Chat Widget',
+					},
+					{
+						name: 'chat-page',
+						title: 'Chat Page',
 					},
 				]}
 			>
@@ -143,6 +156,12 @@ function AdminApp() {
 						)}
 						{tab.name === 'chat-module' && (
 							<ChatModuleSettings
+								settings={settings}
+								onSave={handleSave}
+							/>
+						)}
+						{tab.name === 'chat-page' && (
+							<ChatPageSettings
 								settings={settings}
 								onSave={handleSave}
 							/>

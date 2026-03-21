@@ -40,6 +40,52 @@ class Vector_Query {
 		// Constructor
 	}
 
+	public function get_context( string $query_text, array $conversation_history ): string {
+		$settings = Settings_Manager::get_instance()->get_settings();
+		$api_base_url = rtrim( $settings['vector_api_base_url'] ?? '', '/' );
+		$api_secret_key = method_exists($this, 'get_decrypted_secret_key') ? $this->get_decrypted_secret_key() : '';
+		$website_id = $settings['vector_website_id'] ?? '';
+
+		// Basic credentials check
+		if ( empty( $api_base_url ) || empty( $api_secret_key ) ) {
+			return '';
+		}
+
+		$url = $api_base_url . '/api/v1/context-decider/classify';
+
+		$body = array(
+			'message'   => $query_text,
+			'conversation_history'  => $conversation_history,
+		);
+
+		// Prepare headers
+		$headers = array(
+			'X-API-Key'    => $api_secret_key,
+			'Content-Type' => 'application/json',
+		);
+
+		// Add Website ID header if configured
+		if ( ! empty( $website_id ) ) {
+			$headers['X-Website-ID'] = $website_id;
+		}
+
+		$response = wp_remote_post(
+			$url,
+			array(
+				'headers' => $headers,
+				'body'    => wp_json_encode( $body ),
+				'timeout' => 30,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return '';
+		}
+
+		$response_body = wp_remote_retrieve_body( $response );
+		return (string) $response_body;
+	}
+
 	/**
 	 * Query vector database
 	 *
@@ -86,6 +132,14 @@ class Vector_Query {
 			$headers['X-Website-ID'] = $website_id;
 		}
 
+		$context = $this->get_context( $query_text, [] );
+
+		//file_put_contents( __DIR__ . '/vector-query-context.json', $context );
+
+		// if ( 'search' != $context['action'] ) {
+		// 	return $context['reason'];
+		// }
+
 		$response = wp_remote_post(
 			$url,
 			array(
@@ -118,6 +172,8 @@ class Vector_Query {
 		if ( ! isset( $data['results'] ) || ! is_array( $data['results'] ) ) {
 			return new \WP_Error( 'invalid_response', __( 'Invalid response from vector storage API.', 'directorist-smart-assistant' ) );
 		}
+
+		//file_put_contents( __DIR__ . '/vector-query-results.json', json_encode( $data['results'] ) );
 
 		return $data['results'];
 	}

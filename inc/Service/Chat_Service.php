@@ -60,10 +60,51 @@ class Chat_Service {
 			);
 		}
 
-		$listings_context = $this->get_listings_context( $message );
+		// Step 1: Analyze context to determine action (pass conversation history for better context).
+		$context_decider = Context_Decider::get_instance();
+		$context         = $context_decider->analyze_context( $message, $conversation );
 
-		/** Filter the listings context string before it is injected into the system prompt. */
-		$listings_context = apply_filters( 'dsa_listings_context', $listings_context, $message );
+		file_put_contents( __DIR__ . '/context.json', json_encode( $context ) );
+
+		if ( is_wp_error( $context ) ) {
+			// Fallback to search on error.
+			$context = array(
+				'action'       => 'search',
+				'trigger_type' => null,
+				'listing_id'   => null,
+				'confidence'   => 0,
+			);
+		}
+
+		$action       = $context['action'] ?? 'search';
+		$trigger_type = $context['trigger_type'] ?? null;
+		$listing_id   = $context['listing_id'] ?? null;
+		$confidence   = $context['confidence'] ?? 0;
+
+		/** Fires after context decision is made. */
+		do_action( 'dsa_context_decided', $context, $message, $conversation );
+
+		// Step 2: Handle triggers (email, visit listing).
+		if ( 'trigger' === $action ) {
+			$trigger_response = $this->handle_trigger( $trigger_type, $listing_id, $message );
+
+			/** Fires after trigger action is handled. */
+			do_action( 'dsa_trigger_handled', $trigger_type, $listing_id, $trigger_response );
+
+			return $trigger_response;
+		}
+
+		// Step 3: Determine if vector search should be used.
+		$use_vector_search = ( 'search' === $action );
+
+		// Step 4: Get listings context (only if search action).
+		$listings_context = '';
+		if ( $use_vector_search ) {
+			$listings_context = $this->get_listings_context( $message );
+
+			/** Filter the listings context string before it is injected into the system prompt. */
+			$listings_context = apply_filters( 'dsa_listings_context', $listings_context, $message );
+		}
 
 		$system_prompt = $this->build_system_prompt( $settings, $listings_context );
 
@@ -72,13 +113,15 @@ class Chat_Service {
 
 		$messages = $this->build_messages( $system_prompt, $conversation, $message );
 
+		// Step 5: Call chat API with use_vector_search parameter.
 		$response = $client->chat(
 			$message,
 			$system_prompt,
 			$settings['model'] ?? 'gpt-3.5-turbo',
 			$messages,
 			(float) ( $settings['temperature'] ?? 0.7 ),
-			(int) ( $settings['max_tokens'] ?? 1000 )
+			(int) ( $settings['max_tokens'] ?? 1000 ),
+			$use_vector_search
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -91,6 +134,112 @@ class Chat_Service {
 		do_action( 'dsa_after_chat_response', $message, $response );
 
 		return $response;
+	}
+
+	/**
+	 * Handle trigger actions (contact owner, email admin, visit listing).
+	 *
+	 * @param string|null $trigger_type Type of trigger.
+	 * @param int|null    $listing_id   Listing ID (if applicable).
+	 * @param string      $message      User message.
+	 * @return array Response with confirmation message.
+	 */
+	private function handle_trigger( $trigger_type, $listing_id, string $message ): array {
+		$email_service = Email_Service::get_instance();
+
+		switch ( $trigger_type ) {
+			case 'contact_listing_owner':
+				if ( empty( $listing_id ) ) {
+					return array(
+						'message' => __( 'I couldn\'t identify which listing you want to contact. Could you please specify the listing name?', 'directorist-smart-assistant' ),
+					);
+				}
+
+				$result = $email_service->send_to_listing_owner( $listing_id, $message );
+
+				if ( $result ) {
+					$listing_title = get_the_title( $listing_id );
+					return array(
+						'message' => sprintf(
+							/* translators: %s: Listing title */
+							__( 'Great! I\'ve sent your message to the owner of "%s". They should get back to you soon.', 'directorist-smart-assistant' ),
+							$listing_title
+						),
+					);
+				}
+
+				return array(
+					'message' => __( 'Sorry, I couldn\'t send the email at this time. Please try again later or contact the listing owner directly.', 'directorist-smart-assistant' ),
+				);
+
+			case 'send_email_admin':
+				$result = $email_service->send_to_admin( $message );
+
+				if ( $result ) {
+					return array(
+						'message' => __( 'Thank you! I\'ve forwarded your message to our admin team. They will review it and get back to you shortly.', 'directorist-smart-assistant' ),
+					);
+				}
+
+				return array(
+					'message' => __( 'Sorry, I couldn\'t send your message to the admin at this time. Please try again later.', 'directorist-smart-assistant' ),
+				);
+
+			case 'visit_listing':
+				if ( empty( $listing_id ) ) {
+					return array(
+						'message' => __( 'I couldn\'t identify which listing you want to visit. Could you please be more specific?', 'directorist-smart-assistant' ),
+					);
+				}
+
+				$listing_url = $this->get_listing_url( $listing_id );
+
+				if ( empty( $listing_url ) ) {
+					return array(
+						'message' => __( 'Sorry, I couldn\'t find that listing. It may have been removed or is no longer available.', 'directorist-smart-assistant' ),
+					);
+				}
+
+				$listing_title = get_the_title( $listing_id );
+
+				// Return special response with URL for frontend to open in new tab.
+				return array(
+					'message'     => sprintf(
+						/* translators: 1: Listing title, 2: Listing URL */
+						__( 'Here\'s the listing for "%1$s". <a href="%2$s" target="_blank" rel="noopener noreferrer">Click here to open it</a>.', 'directorist-smart-assistant' ),
+						esc_html( $listing_title ),
+						esc_url( $listing_url )
+					),
+					'action'      => 'open_url',
+					'url'         => $listing_url,
+					'listing_id'  => $listing_id,
+				);
+
+			default:
+				// Unknown trigger type, fall back to regular chat.
+				return array(
+					'message' => __( 'I\'m not sure how to help with that. Could you please rephrase your request?', 'directorist-smart-assistant' ),
+				);
+		}
+	}
+
+	/**
+	 * Get listing URL.
+	 *
+	 * @param int $listing_id Listing post ID.
+	 * @return string Listing URL or empty string.
+	 */
+	private function get_listing_url( int $listing_id ): string {
+		$post = get_post( $listing_id );
+
+		if ( ! $post || 'publish' !== $post->post_status ) {
+			return '';
+		}
+
+		$url = get_permalink( $listing_id );
+
+		/** Filter the listing URL for visit action. */
+		return apply_filters( 'dsa_listing_visit_url', $url, $listing_id );
 	}
 
 	/**

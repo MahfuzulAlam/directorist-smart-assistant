@@ -124,6 +124,13 @@ function ChatWidget() {
 					...newMessages,
 					{ role: 'assistant', content: response.response },
 				]);
+
+				// Handle special actions like opening URLs.
+				if (response.action === 'open_url' && response.url) {
+					setTimeout(() => {
+						window.open(response.url, '_blank', 'noopener,noreferrer');
+					}, 500);
+				}
 			} else {
 				setError(response.message || 'Failed to get response');
 			}

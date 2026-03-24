@@ -163,6 +163,13 @@ function ChatPageApp() {
 				setMessages((prev) => [...prev, { role: 'assistant', content: res.response }]);
 				// Refresh sidebar to update title/timestamp.
 				loadConversations();
+
+				// Handle special actions like opening URLs.
+				if (res.action === 'open_url' && res.url) {
+					setTimeout(() => {
+						window.open(res.url, '_blank', 'noopener,noreferrer');
+					}, 500);
+				}
 			} else {
 				setError(res.message || __('Failed to get response.', 'directorist-smart-assistant'));
 			}

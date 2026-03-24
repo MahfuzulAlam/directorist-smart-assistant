@@ -65,8 +65,9 @@ final class Directorist_Smart_Assistant {
 		add_action( 'admin_notices', array( $this, 'check_directorist_dependency' ) );
 		add_action( 'plugins_loaded', array( $this, 'load_components' ), 10 );
 
-		// Ensure DB tables are up-to-date on admin requests.
-		add_action( 'admin_init', array( 'DirectoristSmartAssistant\Provider\Schema', 'maybe_upgrade' ) );
+		// Ensure DB tables exist and are up-to-date (runs on both frontend and admin).
+		// The check is lightweight — only a get_option() call unless an upgrade is needed.
+		add_action( 'init', array( 'DirectoristSmartAssistant\Provider\Schema', 'maybe_upgrade' ) );
 	}
 
 	/**

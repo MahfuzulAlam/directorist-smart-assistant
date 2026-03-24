@@ -107,22 +107,24 @@ class Vector_API_Client {
 	/**
 	 * Send a chat completion request.
 	 *
-	 * @param string $prompt        User prompt.
-	 * @param string $system_prompt System prompt.
-	 * @param string $model         Model name.
-	 * @param array  $messages      Full messages array.
-	 * @param float  $temperature   Sampling temperature.
-	 * @param int    $max_tokens    Maximum tokens.
+	 * @param string $prompt            User prompt.
+	 * @param string $system_prompt     System prompt.
+	 * @param string $model             Model name.
+	 * @param array  $messages          Full messages array.
+	 * @param float  $temperature       Sampling temperature.
+	 * @param int    $max_tokens        Maximum tokens.
+	 * @param bool   $use_vector_search Whether to use vector search for context.
 	 * @return array|\WP_Error
 	 */
-	public function chat( string $prompt, string $system_prompt, string $model, array $messages, float $temperature, int $max_tokens ) {
+	public function chat( string $prompt, string $system_prompt, string $model, array $messages, float $temperature, int $max_tokens, bool $use_vector_search = true ) {
 		$body = array(
-			'prompt'        => $prompt,
-			'system_prompt' => $system_prompt,
-			'model'         => $model,
-			'temperature'   => $temperature,
-			'max_tokens'    => $max_tokens,
-			'messages'      => $messages,
+			'prompt'            => $prompt,
+			'system_prompt'     => $system_prompt,
+			'model'             => $model,
+			'temperature'       => $temperature,
+			'max_tokens'        => $max_tokens,
+			'messages'          => $messages,
+			'use_vector_search' => $use_vector_search,
 		);
 
 		$response = $this->request( '/api/v1/vectors/chat', $body );
@@ -140,6 +142,36 @@ class Vector_API_Client {
 			return new \WP_Error(
 				'vector_api_error',
 				__( 'Invalid response from Vector API.', 'directorist-smart-assistant' )
+			);
+		}
+
+		return $response;
+	}
+
+	/**
+	 * Analyze message context and determine action.
+	 *
+	 * @param string $message              User message text.
+	 * @param array  $conversation_history Optional conversation history.
+	 * @return array|\WP_Error Context decision data.
+	 */
+	public function decide_context( string $message, array $conversation_history = array() ) {
+		$body = array( 'message' => $message );
+
+		if ( ! empty( $conversation_history ) ) {
+			$body['conversation_history'] = $conversation_history;
+		}
+
+		$response = $this->request( '/api/v1/context-decider/classify', $body, 15 );
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		if ( ! isset( $response['action'] ) ) {
+			return new \WP_Error(
+				'invalid_response',
+				__( 'Invalid context decision response.', 'directorist-smart-assistant' )
 			);
 		}
 

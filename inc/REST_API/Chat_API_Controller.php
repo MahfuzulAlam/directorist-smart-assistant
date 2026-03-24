@@ -421,21 +421,12 @@ class Chat_API_Controller {
 			);
 		}
 
-		// Store user message.
-		$this->provider->add_message( $conversation_id, 'user', $message );
-
-		// Auto-title from first message.
-		$this->provider->auto_title( $conversation_id, $message );
-
-		// Build conversation history from stored messages.
+		// Collect existing conversation history BEFORE inserting the new message.
+		// Chat_Service will append the current user message itself.
 		$db_messages  = $this->provider->get_messages( $conversation_id );
 		$conversation = array();
 		foreach ( $db_messages as $msg ) {
 			if ( 'system' === $msg['role'] ) {
-				continue;
-			}
-			// Exclude the user message we just added (it'll be added by Chat_Service).
-			if ( (int) $msg['id'] === (int) $this->last_insert_id() ) {
 				continue;
 			}
 			$conversation[] = array(
@@ -443,6 +434,12 @@ class Chat_API_Controller {
 				'content' => $msg['content'],
 			);
 		}
+
+		// Store user message in DB.
+		$this->provider->add_message( $conversation_id, 'user', $message );
+
+		// Auto-title from first message.
+		$this->provider->auto_title( $conversation_id, $message );
 
 		// Process through AI.
 		$response = Chat_Service::get_instance()->process_message( $message, $conversation );
@@ -456,7 +453,7 @@ class Chat_API_Controller {
 
 		$assistant_content = $response['message'] ?? '';
 
-		// Store assistant response.
+		// Store assistant response in DB.
 		$this->provider->add_message( $conversation_id, 'assistant', $assistant_content );
 
 		return new \WP_REST_Response(
@@ -541,16 +538,6 @@ class Chat_API_Controller {
 	// ------------------------------------------------------------------
 	// Helpers
 	// ------------------------------------------------------------------
-
-	/**
-	 * Get last inserted ID from wpdb.
-	 *
-	 * @return int
-	 */
-	private function last_insert_id(): int {
-		global $wpdb;
-		return (int) $wpdb->insert_id;
-	}
 
 	/**
 	 * Transient-based rate limiter.

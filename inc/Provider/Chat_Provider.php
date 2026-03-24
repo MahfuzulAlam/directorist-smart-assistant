@@ -331,6 +331,9 @@ class Chat_Provider {
 			return false;
 		}
 
+		// Capture insert_id immediately — the UPDATE below resets it.
+		$message_id = (int) $wpdb->insert_id;
+
 		// Touch conversation updated_at.
 		$wpdb->update(
 			Schema::conversations_table(),
@@ -340,7 +343,7 @@ class Chat_Provider {
 			array( '%d' )
 		);
 
-		return (int) $wpdb->insert_id;
+		return $message_id;
 	}
 
 	/**

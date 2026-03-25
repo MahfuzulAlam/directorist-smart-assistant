@@ -6,7 +6,7 @@ import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import './index.css';
 
-const SESSION_KEY = 'dsa_session_id';
+const SESSION_KEY = 'daia_session_id';
 
 function getSessionId() {
 	let id = localStorage.getItem(SESSION_KEY);
@@ -32,12 +32,12 @@ function ChatPageApp() {
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 	const [initialLoad, setInitialLoad] = useState(true);
 
-	const colorStyle = { '--dsa-primary': cfg.primaryColor || '#667eea' };
+	const colorStyle = { '--daia-primary': cfg.primaryColor || '#667eea' };
 
 	const loadConversations = useCallback(async () => {
 		try {
 			const res = await apiFetch({
-				path: `directorist-smart-assistant/v1/conversations?session_id=${encodeURIComponent(sessionId)}&source=page`,
+				path: `directorist-ai-agents/v1/conversations?session_id=${encodeURIComponent(sessionId)}&source=page`,
 			});
 			setConversations(Array.isArray(res) ? res : []);
 		} catch {
@@ -59,7 +59,7 @@ function ChatPageApp() {
 			}
 			try {
 				const res = await apiFetch({
-					path: `directorist-smart-assistant/v1/conversations/${convId}?session_id=${encodeURIComponent(sessionId)}`,
+					path: `directorist-ai-agents/v1/conversations/${convId}?session_id=${encodeURIComponent(sessionId)}`,
 				});
 				setMessages(
 					(res.messages || []).map((m) => ({
@@ -81,7 +81,7 @@ function ChatPageApp() {
 	const createConversation = async () => {
 		try {
 			const res = await apiFetch({
-				path: 'directorist-smart-assistant/v1/conversations',
+				path: 'directorist-ai-agents/v1/conversations',
 				method: 'POST',
 				data: { session_id: sessionId, source: 'page' },
 			});
@@ -92,7 +92,7 @@ function ChatPageApp() {
 				setError(null);
 			}
 		} catch (err) {
-			setError(err.message || __('Failed to create conversation.', 'directorist-smart-assistant'));
+			setError(err.message || __('Failed to create conversation.', 'directorist-ai-agents'));
 		}
 	};
 
@@ -108,7 +108,7 @@ function ChatPageApp() {
 	const handleDeleteConversation = async (id) => {
 		try {
 			await apiFetch({
-				path: `directorist-smart-assistant/v1/conversations/${id}?session_id=${encodeURIComponent(sessionId)}`,
+				path: `directorist-ai-agents/v1/conversations/${id}?session_id=${encodeURIComponent(sessionId)}`,
 				method: 'DELETE',
 			});
 			setConversations((prev) => prev.filter((c) => Number(c.id) !== Number(id)));
@@ -130,7 +130,7 @@ function ChatPageApp() {
 		if (!convId) {
 			try {
 				const res = await apiFetch({
-					path: 'directorist-smart-assistant/v1/conversations',
+					path: 'directorist-ai-agents/v1/conversations',
 					method: 'POST',
 					data: { session_id: sessionId, source: 'page' },
 				});
@@ -139,7 +139,7 @@ function ChatPageApp() {
 					setConversations((prev) => [res.conversation, ...prev]);
 					setActiveConvId(convId);
 				} else {
-					setError(__('Failed to create conversation.', 'directorist-smart-assistant'));
+					setError(__('Failed to create conversation.', 'directorist-ai-agents'));
 					return;
 				}
 			} catch (err) {
@@ -154,7 +154,7 @@ function ChatPageApp() {
 
 		try {
 			const res = await apiFetch({
-				path: `directorist-smart-assistant/v1/conversations/${convId}/messages`,
+				path: `directorist-ai-agents/v1/conversations/${convId}/messages`,
 				method: 'POST',
 				data: { session_id: sessionId, message: text },
 			});
@@ -171,10 +171,10 @@ function ChatPageApp() {
 					}, 500);
 				}
 			} else {
-				setError(res.message || __('Failed to get response.', 'directorist-smart-assistant'));
+				setError(res.message || __('Failed to get response.', 'directorist-ai-agents'));
 			}
 		} catch (err) {
-			setError(err.message || __('An error occurred.', 'directorist-smart-assistant'));
+			setError(err.message || __('An error occurred.', 'directorist-ai-agents'));
 		} finally {
 			setLoading(false);
 		}
@@ -182,9 +182,9 @@ function ChatPageApp() {
 
 	if (initialLoad) {
 		return (
-			<div className="dsa-chat-page" style={colorStyle}>
-				<div className="dsa-chat-page__loading">
-					<div className="dsa-chat-page__spinner" />
+			<div className="daia-chat-page" style={colorStyle}>
+				<div className="daia-chat-page__loading">
+					<div className="daia-chat-page__spinner" />
 				</div>
 			</div>
 		);
@@ -193,7 +193,7 @@ function ChatPageApp() {
 	const showSidebar = cfg.showSidebar !== false;
 
 	return (
-		<div className="dsa-chat-page" style={colorStyle}>
+		<div className="daia-chat-page" style={colorStyle}>
 			{showSidebar && (
 				<Sidebar
 					conversations={conversations}
@@ -219,7 +219,7 @@ function ChatPageApp() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-	const container = document.getElementById('dsa-chat-page-root');
+	const container = document.getElementById('daia-chat-page-root');
 	if (container) {
 		const root = createRoot(container);
 		root.render(<ChatPageApp />);

@@ -4,13 +4,13 @@
  *
  * Centralizes all HTTP communication with the vector storage service.
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Service;
+namespace DirectoristAIAgents\Service;
 
-use DirectoristSmartAssistant\Settings\Settings_Manager;
-use DirectoristSmartAssistant\Helpers\Listing_Helper;
+use DirectoristAIAgents\Settings\Settings_Manager;
+use DirectoristAIAgents\Helpers\Listing_Helper;
 
 /**
  * Vector API Client class
@@ -97,7 +97,7 @@ class Vector_API_Client {
 		if ( ! isset( $response['results'] ) || ! is_array( $response['results'] ) ) {
 			return new \WP_Error(
 				'invalid_response',
-				__( 'Invalid response from vector storage API.', 'directorist-smart-assistant' )
+				__( 'Invalid response from vector storage API.', 'directorist-ai-agents' )
 			);
 		}
 
@@ -134,14 +134,14 @@ class Vector_API_Client {
 		}
 
 		if ( ! isset( $response['success'] ) || ! $response['success'] ) {
-			$error_message = $response['message'] ?? __( 'Vector API request failed.', 'directorist-smart-assistant' );
+			$error_message = $response['message'] ?? __( 'Vector API request failed.', 'directorist-ai-agents' );
 			return new \WP_Error( 'vector_api_error', $error_message );
 		}
 
 		if ( ! isset( $response['message'] ) ) {
 			return new \WP_Error(
 				'vector_api_error',
-				__( 'Invalid response from Vector API.', 'directorist-smart-assistant' )
+				__( 'Invalid response from Vector API.', 'directorist-ai-agents' )
 			);
 		}
 
@@ -171,7 +171,7 @@ class Vector_API_Client {
 		if ( ! isset( $response['action'] ) ) {
 			return new \WP_Error(
 				'invalid_response',
-				__( 'Invalid context decision response.', 'directorist-smart-assistant' )
+				__( 'Invalid context decision response.', 'directorist-ai-agents' )
 			);
 		}
 
@@ -249,7 +249,7 @@ class Vector_API_Client {
 		$response_body = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( 422 === $response_code ) {
-			$error_message = __( 'Invalid request parameters.', 'directorist-smart-assistant' );
+			$error_message = __( 'Invalid request parameters.', 'directorist-ai-agents' );
 			if ( isset( $response_body['detail'] ) && is_array( $response_body['detail'] ) ) {
 				$errors = array();
 				foreach ( $response_body['detail'] as $detail ) {
@@ -267,7 +267,7 @@ class Vector_API_Client {
 		if ( $response_code < 200 || $response_code >= 300 ) {
 			$error_message = sprintf(
 				/* translators: %d: HTTP status code */
-				__( 'Vector storage API returned error code %d.', 'directorist-smart-assistant' ),
+				__( 'Vector storage API returned error code %d.', 'directorist-ai-agents' ),
 				$response_code
 			);
 			error_log( 'Vector API Error [' . $endpoint . ']: ' . $error_message );

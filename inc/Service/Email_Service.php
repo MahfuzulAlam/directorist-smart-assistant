@@ -4,10 +4,10 @@
  *
  * Handles email sending for contact and notification triggers.
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Service;
+namespace DirectoristAIAgents\Service;
 
 /**
  * Email_Service class
@@ -62,7 +62,7 @@ class Email_Service {
 
 		$subject = sprintf(
 			/* translators: %s: Listing title */
-			__( 'New inquiry about: %s', 'directorist-smart-assistant' ),
+			__( 'New inquiry about: %s', 'directorist-ai-agents' ),
 			$listing->post_title
 		);
 
@@ -84,19 +84,19 @@ class Email_Service {
 		}
 
 		/** Filter the email headers before sending to listing owner. */
-		$headers = apply_filters( 'dsa_listing_owner_email_headers', $headers, $listing_id, $message );
+		$headers = apply_filters( 'daia_listing_owner_email_headers', $headers, $listing_id, $message );
 
 		/** Filter the email subject before sending to listing owner. */
-		$subject = apply_filters( 'dsa_listing_owner_email_subject', $subject, $listing_id );
+		$subject = apply_filters( 'daia_listing_owner_email_subject', $subject, $listing_id );
 
 		/** Filter the email body before sending to listing owner. */
-		$body = apply_filters( 'dsa_listing_owner_email_body', $body, $listing_id, $message );
+		$body = apply_filters( 'daia_listing_owner_email_body', $body, $listing_id, $message );
 
 		$result = wp_mail( $owner_email, $subject, $body, $headers );
 
 		if ( $result ) {
 			/** Fires after successfully sending email to listing owner. */
-			do_action( 'dsa_listing_owner_email_sent', $listing_id, $owner_email, $message );
+			do_action( 'daia_listing_owner_email_sent', $listing_id, $owner_email, $message );
 		} else {
 			error_log( "Email Service: Failed to send email to listing owner for listing ID {$listing_id}" );
 		}
@@ -120,7 +120,7 @@ class Email_Service {
 			return false;
 		}
 
-		$subject = __( 'New message from Smart Assistant', 'directorist-smart-assistant' );
+		$subject = __( 'New message from AI Agents', 'directorist-ai-agents' );
 
 		$body = $this->build_email_body(
 			$subject,
@@ -137,19 +137,19 @@ class Email_Service {
 		}
 
 		/** Filter the email headers before sending to admin. */
-		$headers = apply_filters( 'dsa_admin_email_headers', $headers, $message );
+		$headers = apply_filters( 'daia_admin_email_headers', $headers, $message );
 
 		/** Filter the email subject before sending to admin. */
-		$subject = apply_filters( 'dsa_admin_email_subject', $subject );
+		$subject = apply_filters( 'daia_admin_email_subject', $subject );
 
 		/** Filter the email body before sending to admin. */
-		$body = apply_filters( 'dsa_admin_email_body', $body, $message );
+		$body = apply_filters( 'daia_admin_email_body', $body, $message );
 
 		$result = wp_mail( $admin_email, $subject, $body, $headers );
 
 		if ( $result ) {
 			/** Fires after successfully sending email to admin. */
-			do_action( 'dsa_admin_email_sent', $admin_email, $message );
+			do_action( 'daia_admin_email_sent', $admin_email, $message );
 		} else {
 			error_log( 'Email Service: Failed to send email to admin.' );
 		}
@@ -180,7 +180,7 @@ class Email_Service {
 		}
 
 		/** Filter the listing owner email (allows custom logic). */
-		return apply_filters( 'dsa_listing_owner_email', '', $listing_id );
+		return apply_filters( 'daia_listing_owner_email', '', $listing_id );
 	}
 
 	/**
@@ -196,7 +196,7 @@ class Email_Service {
 		}
 
 		/** Filter the admin email for notifications. */
-		return apply_filters( 'dsa_admin_notification_email', sanitize_email( $admin_email ) );
+		return apply_filters( 'daia_admin_notification_email', sanitize_email( $admin_email ) );
 	}
 
 	/**
@@ -232,7 +232,7 @@ class Email_Service {
 				</div>
 				<div class="content">
 					<?php if ( ! empty( $context['listing_title'] ) ) : ?>
-						<p><strong><?php esc_html_e( 'Listing:', 'directorist-smart-assistant' ); ?></strong> <?php echo esc_html( $context['listing_title'] ); ?></p>
+						<p><strong><?php esc_html_e( 'Listing:', 'directorist-ai-agents' ); ?></strong> <?php echo esc_html( $context['listing_title'] ); ?></p>
 					<?php endif; ?>
 
 					<div class="message">
@@ -241,7 +241,7 @@ class Email_Service {
 
 					<?php if ( ! empty( $context['listing_url'] ) ) : ?>
 						<a href="<?php echo esc_url( $context['listing_url'] ); ?>" class="button">
-							<?php esc_html_e( 'View Listing', 'directorist-smart-assistant' ); ?>
+							<?php esc_html_e( 'View Listing', 'directorist-ai-agents' ); ?>
 						</a>
 					<?php endif; ?>
 				</div>
@@ -250,7 +250,7 @@ class Email_Service {
 						<?php
 						printf(
 							/* translators: %s: Site name */
-							esc_html__( 'Sent from %s', 'directorist-smart-assistant' ),
+							esc_html__( 'Sent from %s', 'directorist-ai-agents' ),
 							esc_html( $context['site_name'] ?? get_bloginfo( 'name' ) )
 						);
 						?>

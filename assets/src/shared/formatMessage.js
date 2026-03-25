@@ -46,7 +46,7 @@ export function processInlineMarkdown(text) {
 	linkPlaceholders.forEach(({ ph, t, u }) => {
 		out = out.replace(
 			escapeHtml(ph),
-			`<a href="${escapeHtml(u)}" target="_blank" rel="noopener noreferrer" class="dsa-chat-link">${escapeHtml(t)}</a>`
+			`<a href="${escapeHtml(u)}" target="_blank" rel="noopener noreferrer" class="daia-chat-link">${escapeHtml(t)}</a>`
 		);
 	});
 
@@ -69,7 +69,7 @@ export function formatMessageContent(text) {
 
 	const flushList = () => {
 		if (listItems.length) {
-			processed.push(`<ul class="dsa-list-numbered">${listItems.join('')}</ul>`);
+			processed.push(`<ul class="daia-list-numbered">${listItems.join('')}</ul>`);
 			listItems = [];
 		}
 	};

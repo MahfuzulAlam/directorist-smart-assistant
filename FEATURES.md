@@ -1,4 +1,4 @@
-# Directorist Smart Assistant - Features
+# Directorist - AI Agents - Features
 
 ## Core Features
 
@@ -39,16 +39,16 @@
 - Masked API key display in admin
 
 ### 5. REST API Endpoints
-- `GET /wp-json/directorist-smart-assistant/v1/settings` - Retrieve settings
-- `POST /wp-json/directorist-smart-assistant/v1/settings` - Save settings
-- `POST /wp-json/directorist-smart-assistant/v1/chat` - Handle chat messages
-- `GET /wp-json/directorist-smart-assistant/v1/listings` - Get listings data
+- `GET /wp-json/directorist-ai-agents/v1/settings` - Retrieve settings
+- `POST /wp-json/directorist-ai-agents/v1/settings` - Save settings
+- `POST /wp-json/directorist-ai-agents/v1/chat` - Handle chat messages
+- `GET /wp-json/directorist-ai-agents/v1/listings` - Get listings data
 
 ## Technical Architecture
 
 ### PHP Structure
 - PSR-4 autoloading with Composer
-- Namespace: `DirectoristSmartAssistant`
+- Namespace: `DirectoristAIAgents`
 - Singleton pattern for main classes
 - Dependency injection where appropriate
 - Modern PHP 7.4+ features (typed properties, return types)
@@ -69,7 +69,7 @@
 ## File Structure
 
 ```
-directorist-smart-assistant/
+directorist-ai-agents/
 ├── assets/
 │   ├── build/              # Compiled assets (generated)
 │   └── src/
@@ -84,13 +84,13 @@ directorist-smart-assistant/
 ├── composer.json          # PHP dependencies
 ├── package.json           # Node dependencies
 ├── webpack.config.js      # Build configuration
-└── directorist-smart-assistant.php  # Main plugin file
+└── directorist-ai-agents.php  # Main plugin file
 ```
 
 ## Usage Flow
 
 1. **Admin Configuration**
-   - Admin navigates to Directorist > Smart Assistant
+   - Admin navigates to Directorist > AI Agents
    - Enters OpenAI API key and configures settings
    - Settings saved to database (API key encrypted)
 

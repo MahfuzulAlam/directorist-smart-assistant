@@ -1,8 +1,8 @@
 # Copyright (C) 2024 wpXplore
-# This file is distributed under the same license as the Directorist Smart Assistant plugin.
+# This file is distributed under the same license as the Directorist - AI Agents plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: Directorist Smart Assistant 1.0.0\n"
+"Project-Id-Version: Directorist - AI Agents 1.0.0\n"
 "Report-Msgid-Bugs-To: https://wpxplore.com\n"
 "POT-Creation-Date: 2024-01-01 00:00:00+00:00\n"
 "MIME-Version: 1.0\n"

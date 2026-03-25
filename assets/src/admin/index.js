@@ -2,10 +2,9 @@
  * WordPress dependencies
  */
 import { createRoot } from '@wordpress/element';
-import { TabPanel } from '@wordpress/components';
+import { TabPanel, Notice } from '@wordpress/components';
 import { useState, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
-import { Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -18,8 +17,6 @@ import './index.css';
  */
 import ChatAgentSetup from './components/ChatAgentSetup';
 import VectorStorageSetup from './components/VectorStorageSetup';
-import ChatModuleSettings from './components/ChatModuleSettings';
-import ChatPageSettings from './components/ChatPageSettings';
 
 /**
  * Admin App Component
@@ -67,7 +64,7 @@ function AdminApp() {
 	const loadSettings = async () => {
 		try {
 			const response = await apiFetch({
-				path: 'directorist-smart-assistant/v1/settings',
+				path: 'directorist-ai-agents/v1/settings',
 				method: 'GET',
 			});
 			setSettings(response);
@@ -86,7 +83,7 @@ function AdminApp() {
 	const handleSave = async (updatedSettings) => {
 		try {
 			const response = await apiFetch({
-				path: 'directorist-smart-assistant/v1/settings',
+				path: 'directorist-ai-agents/v1/settings',
 				method: 'POST',
 				data: updatedSettings,
 			});
@@ -103,11 +100,11 @@ function AdminApp() {
 	};
 
 	if (loading) {
-		return <div className="loading-state">{__('Loading settings...', 'directorist-smart-assistant')}</div>;
+		return <div className="loading-state">{__('Loading settings...', 'directorist-ai-agents')}</div>;
 	}
 
 	return (
-		<div className="directorist-smart-assistant-admin">
+		<div className="directorist-ai-agents-admin">
 			{notice && (
 				<Notice
 					status={notice.type}
@@ -119,29 +116,21 @@ function AdminApp() {
 			)}
 
 			<TabPanel
-				className="directorist-smart-assistant-tabs"
+				className="directorist-ai-agents-tabs"
 				activeClass="is-active"
 				tabs={[
 					{
 						name: 'chat-agent',
-						title: 'Chat Agent Setup',
+						title: 'Chat Agent',
 					},
 					{
 						name: 'vector-storage',
 						title: 'Vector Storage',
 					},
-					{
-						name: 'chat-module',
-						title: 'Chat Widget',
-					},
-					{
-						name: 'chat-page',
-						title: 'Chat Page',
-					},
 				]}
 			>
 				{(tab) => (
-					<div className="directorist-smart-assistant-tab-content">
+					<div className="directorist-ai-agents-tab-content">
 						{tab.name === 'chat-agent' && (
 							<ChatAgentSetup
 								settings={settings}
@@ -154,18 +143,6 @@ function AdminApp() {
 								onSave={handleSave}
 							/>
 						)}
-						{tab.name === 'chat-module' && (
-							<ChatModuleSettings
-								settings={settings}
-								onSave={handleSave}
-							/>
-						)}
-						{tab.name === 'chat-page' && (
-							<ChatPageSettings
-								settings={settings}
-								onSave={handleSave}
-							/>
-						)}
 					</div>
 				)}
 			</TabPanel>
@@ -174,14 +151,14 @@ function AdminApp() {
 }
 
 // Render the app
-// const root = document.getElementById('directorist-smart-assistant-admin-root');
+// const root = document.getElementById('directorist-ai-agents-admin-root');
 // if (root) {
 // 	render(<AdminApp />, root);
 // }
 
 document.addEventListener('DOMContentLoaded', () => {
     // Mount only if the target element exists
-    const container = document.getElementById('directorist-smart-assistant-admin-root');
+    const container = document.getElementById('directorist-ai-agents-admin-root');
     if (container) {
         const root = createRoot(container);
         root.render(<AdminApp />);

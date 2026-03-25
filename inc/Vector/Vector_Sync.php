@@ -2,14 +2,14 @@
 /**
  * Vector Sync Handler
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Vector;
+namespace DirectoristAIAgents\Vector;
 
-use DirectoristSmartAssistant\Settings\Settings_Manager;
-use DirectoristSmartAssistant\Service\Vector_API_Client;
-use DirectoristSmartAssistant\Helpers\Listing_Helper;
+use DirectoristAIAgents\Settings\Settings_Manager;
+use DirectoristAIAgents\Service\Vector_API_Client;
+use DirectoristAIAgents\Helpers\Listing_Helper;
 
 /**
  * Vector Sync class
@@ -93,14 +93,14 @@ class Vector_Sync {
 	 */
 	public function upsert_listing( int $post_id, $post ) {
 		if ( ! $post || ! isset( $post->ID ) || empty( $post->ID ) ) {
-			return new \WP_Error( 'invalid_post', __( 'Invalid post object provided.', 'directorist-smart-assistant' ) );
+			return new \WP_Error( 'invalid_post', __( 'Invalid post object provided.', 'directorist-ai-agents' ) );
 		}
 
 		$client = Vector_API_Client::from_settings();
 		if ( ! $client ) {
 			return new \WP_Error(
 				'missing_credentials',
-				__( 'Vector storage API credentials are not configured.', 'directorist-smart-assistant' )
+				__( 'Vector storage API credentials are not configured.', 'directorist-ai-agents' )
 			);
 		}
 
@@ -108,7 +108,7 @@ class Vector_Sync {
 		$metadata = $this->prepare_listing_metadata( $post_id );
 
 		/** Filter the metadata sent to the vector database during sync. */
-		$metadata = apply_filters( 'dsa_listing_metadata', $metadata, $post_id );
+		$metadata = apply_filters( 'daia_listing_metadata', $metadata, $post_id );
 
 		$existing_upsert_id = get_post_meta( $post_id, '_upsert_id', true );
 
@@ -137,7 +137,7 @@ class Vector_Sync {
 		}
 
 		/** Fires after a single listing is synced to the vector database. */
-		do_action( 'dsa_after_vector_sync', $post_id, $response );
+		do_action( 'daia_after_vector_sync', $post_id, $response );
 
 		return true;
 	}
@@ -210,7 +210,7 @@ class Vector_Sync {
 				'success' => 0,
 				'failed'  => 0,
 				'total'   => 0,
-				'errors'  => array( __( 'Vector storage API credentials are not configured.', 'directorist-smart-assistant' ) ),
+				'errors'  => array( __( 'Vector storage API credentials are not configured.', 'directorist-ai-agents' ) ),
 			);
 		}
 
@@ -223,7 +223,7 @@ class Vector_Sync {
 				'success' => 0,
 				'failed'  => 0,
 				'total'   => 0,
-				'errors'  => array( __( 'No listings found to sync.', 'directorist-smart-assistant' ) ),
+				'errors'  => array( __( 'No listings found to sync.', 'directorist-ai-agents' ) ),
 			);
 		}
 
@@ -249,7 +249,7 @@ class Vector_Sync {
 					$results['failed']++;
 					$results['errors'][] = sprintf(
 						/* translators: %d: Post ID */
-						__( 'Post ID %d not found.', 'directorist-smart-assistant' ),
+						__( 'Post ID %d not found.', 'directorist-ai-agents' ),
 						$post_id
 					);
 					continue;
@@ -259,7 +259,7 @@ class Vector_Sync {
 				$metadata = $this->prepare_listing_metadata( $post_id );
 
 				/** Filter the metadata sent to the vector database during sync. */
-				$metadata = apply_filters( 'dsa_listing_metadata', $metadata, $post_id );
+				$metadata = apply_filters( 'daia_listing_metadata', $metadata, $post_id );
 
 				$existing_upsert_id = get_post_meta( $post_id, '_upsert_id', true );
 
@@ -285,7 +285,7 @@ class Vector_Sync {
 				$results['failed'] += count( $batch );
 				$results['errors'][] = sprintf(
 					/* translators: %1$d: Batch number, %2$s: Error message */
-					__( 'Batch %1$d: %2$s', 'directorist-smart-assistant' ),
+					__( 'Batch %1$d: %2$s', 'directorist-ai-agents' ),
 					$batch_index + 1,
 					$response->get_error_message()
 				);
@@ -311,7 +311,7 @@ class Vector_Sync {
 						if ( isset( $result['error'] ) ) {
 							$results['errors'][] = sprintf(
 								/* translators: %1$d: Post ID, %2$s: Error message */
-								__( 'Post ID %1$d: %2$s', 'directorist-smart-assistant' ),
+								__( 'Post ID %1$d: %2$s', 'directorist-ai-agents' ),
 								$post_id,
 								$result['error']
 							);
@@ -323,7 +323,7 @@ class Vector_Sync {
 				$results['failed'] += count( $batch );
 				$results['errors'][] = sprintf(
 					/* translators: %d: Batch number */
-					__( 'Batch %d: Unexpected response format from API.', 'directorist-smart-assistant' ),
+					__( 'Batch %d: Unexpected response format from API.', 'directorist-ai-agents' ),
 					$batch_index + 1
 				);
 				error_log( 'Vector Batch Sync: Unexpected response format for batch ' . ( $batch_index + 1 ) );
@@ -331,7 +331,7 @@ class Vector_Sync {
 		}
 
 		/** Fires after a bulk sync operation completes. */
-		do_action( 'dsa_after_bulk_sync', $results );
+		do_action( 'daia_after_bulk_sync', $results );
 
 		return $results;
 	}

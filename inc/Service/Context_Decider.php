@@ -4,13 +4,13 @@
  *
  * Analyzes user messages to determine the appropriate action and context.
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Service;
+namespace DirectoristAIAgents\Service;
 
-use DirectoristSmartAssistant\Settings\Settings_Manager;
-use DirectoristSmartAssistant\Helpers\Listing_Helper;
+use DirectoristAIAgents\Settings\Settings_Manager;
+use DirectoristAIAgents\Helpers\Listing_Helper;
 
 /**
  * Context_Decider class
@@ -53,7 +53,7 @@ class Context_Decider {
 		if ( ! $client ) {
 			return new \WP_Error(
 				'not_configured',
-				__( 'Vector API is not configured.', 'directorist-smart-assistant' )
+				__( 'Vector API is not configured.', 'directorist-ai-agents' )
 			);
 		}
 
@@ -112,6 +112,6 @@ class Context_Decider {
 		);
 
 		// Apply filter for extensibility.
-		return apply_filters( 'dsa_context_decision', $decision, $message, $conversation_history );
+		return apply_filters( 'daia_context_decision', $decision, $message, $conversation_history );
 	}
 }

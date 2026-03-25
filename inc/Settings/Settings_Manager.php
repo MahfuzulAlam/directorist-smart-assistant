@@ -2,10 +2,10 @@
 /**
  * Settings Manager
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Settings;
+namespace DirectoristAIAgents\Settings;
 
 /**
  * Settings Manager class
@@ -42,7 +42,7 @@ class Settings_Manager {
 	 * Constructor
 	 */
 	private function __construct() {
-		// Constructor
+		// Constructor.
 	}
 
 	/**
@@ -57,7 +57,7 @@ class Settings_Manager {
 			'system_prompt' => 'You are a helpful assistant for a business directory website. Answer questions about the listings available on this site.',
 			'temperature'   => 0.7,
 			'max_tokens'    => 1000,
-			// Vector storage defaults
+			// Vector storage defaults.
 			'vector_api_base_url'   => '',
 			'vector_api_secret_key'  => '',
 			'vector_website_id'      => '',
@@ -70,11 +70,11 @@ class Settings_Manager {
 			'vector_embedding_model' => 'text-embedding-ada-002',
 			'vector_index_name'     => 'directorist-listings',
 			'vector_namespace'       => '',
-			// Chat module settings
+			// Chat module settings.
 			'chat_agent_name'        => '',
 			'chat_widget_position'   => 'bottom-right',
 			'chat_widget_color'      => '#667eea',
-			// Page chat settings
+			// Page chat settings.
 			'page_chat_enabled'          => false,
 			'page_chat_title'            => 'Chat Assistant',
 			'page_chat_welcome_message'  => '',
@@ -98,38 +98,38 @@ class Settings_Manager {
 	public function save_settings( array $settings ): bool {
 		$current_settings = $this->get_settings();
 
-		// Handle API key encryption
+		// Handle API key encryption.
 		if ( isset( $settings['api_key'] ) ) {
-			// If API key is empty or masked, preserve existing encrypted key
+			// If API key is empty or masked, preserve existing encrypted key.
 			if ( empty( $settings['api_key'] ) || strpos( $settings['api_key'], '***' ) !== false ) {
 				$settings['api_key'] = $current_settings['api_key'] ?? '';
 			}
-			// Only encrypt if it's a new unencrypted key (starts with "sk-")
+			// Only encrypt if it's a new unencrypted key (starts with "sk-").
 			elseif ( ! empty( $settings['api_key'] ) && strpos( $settings['api_key'], 'sk-' ) === 0 ) {
 				$settings['api_key'] = $this->encrypt_api_key( $settings['api_key'] );
 			}
-			// Otherwise, it's already encrypted, keep it as-is
+			// Otherwise, it's already encrypted, keep it as-is.
 		} else {
-			// If API key is not provided, preserve existing
+			// If API key is not provided, preserve existing.
 			$settings['api_key'] = $current_settings['api_key'] ?? '';
 		}
 
-		// Handle vector API secret key encryption
+		// Handle vector API secret key encryption.
 		if ( isset( $settings['vector_api_secret_key'] ) ) {
-			// If secret key is empty or masked, preserve existing encrypted key
+			// If secret key is empty or masked, preserve existing encrypted key.
 			if ( empty( $settings['vector_api_secret_key'] ) || strpos( $settings['vector_api_secret_key'], '***' ) !== false ) {
 				$settings['vector_api_secret_key'] = $current_settings['vector_api_secret_key'] ?? '';
 			}
-			// Encrypt the secret key if it's new (not already encrypted)
+			// Encrypt the secret key if it's new (not already encrypted).
 			elseif ( ! empty( $settings['vector_api_secret_key'] ) ) {
 				$settings['vector_api_secret_key'] = $this->encrypt_api_key( $settings['vector_api_secret_key'] );
 			}
 		} else {
-			// If secret key is not provided, preserve existing
+			// If secret key is not provided, preserve existing.
 			$settings['vector_api_secret_key'] = $current_settings['vector_api_secret_key'] ?? '';
 		}
 
-		// Merge with existing settings to preserve all fields
+		// Merge with existing settings to preserve all fields.
 		$settings = wp_parse_args( $settings, $current_settings );
 
 		return update_option( $this->option_name, $settings );
@@ -154,9 +154,9 @@ class Settings_Manager {
 	 * @return string
 	 */
 	private function encrypt_api_key( string $api_key ): string {
-		// Simple encryption using WordPress salts
+		// Simple encryption using WordPress salts.
 		if ( ! function_exists( 'openssl_encrypt' ) ) {
-			// Fallback to base64 if OpenSSL is not available
+			// Fallback to base64 if OpenSSL is not available.
 			return base64_encode( $api_key ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 		}
 
@@ -192,14 +192,14 @@ class Settings_Manager {
 		$data = base64_decode( $encrypted_api_key ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 
 		if ( false === $data ) {
-			error_log( 'Directorist Smart Assistant: Failed to base64-decode API key.' );
+			error_log( 'Directorist - AI Agents: Failed to base64-decode API key.' );
 			return '';
 		}
 
 		$iv_length = openssl_cipher_iv_length( 'AES-256-CBC' );
 
 		if ( strlen( $data ) <= $iv_length ) {
-			error_log( 'Directorist Smart Assistant: Encrypted API key data is too short.' );
+			error_log( 'Directorist - AI Agents: Encrypted API key data is too short.' );
 			return '';
 		}
 
@@ -208,7 +208,7 @@ class Settings_Manager {
 		$decrypted = openssl_decrypt( $encrypted, 'AES-256-CBC', $key, 0, $iv );
 
 		if ( false === $decrypted ) {
-			error_log( 'Directorist Smart Assistant: Failed to decrypt API key.' );
+			error_log( 'Directorist - AI Agents: Failed to decrypt API key.' );
 			return '';
 		}
 

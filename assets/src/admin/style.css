@@ -1,25 +1,29 @@
-.directorist-smart-assistant-admin {
+/* ===================================================================
+   Admin Container & Layout
+   =================================================================== */
+
+.directorist-ai-agents-admin {
 	padding: 0;
 	max-width: 1200px;
 	margin: 0 auto;
 }
 
-.directorist-smart-assistant-admin .components-notice {
+.directorist-ai-agents-admin .components-notice {
 	margin: 20px 0 0 0;
 	border-radius: 8px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.directorist-smart-assistant-tabs {
+.directorist-ai-agents-tabs {
 	margin-top: 24px;
 }
 
-.directorist-smart-assistant-tabs .components-tab-panel__tabs {
+.directorist-ai-agents-tabs .components-tab-panel__tabs {
 	border-bottom: 2px solid #e5e7eb;
 	margin-bottom: 20px;
 }
 
-.directorist-smart-assistant-tabs .components-tab-panel__tabs button {
+.directorist-ai-agents-tabs .components-tab-panel__tabs button {
 	padding: 12px 24px;
 	font-size: 14px;
 	font-weight: 600;
@@ -31,20 +35,529 @@
 	margin-bottom: -2px;
 }
 
-.directorist-smart-assistant-tabs .components-tab-panel__tabs button:hover {
+.directorist-ai-agents-tabs .components-tab-panel__tabs button:hover {
 	color: #667eea;
 	background: rgba(102, 126, 234, 0.05);
 }
 
-.directorist-smart-assistant-tabs .components-tab-panel__tabs button.is-active {
+.directorist-ai-agents-tabs .components-tab-panel__tabs button.is-active {
 	color: #667eea;
 	border-bottom-color: #667eea;
 	background: transparent;
 }
 
-.directorist-smart-assistant-tab-content {
+.directorist-ai-agents-tab-content {
 	padding: 0;
 	margin-top: 0;
+}
+
+/* ===================================================================
+   Common Settings Card Styles (Base Pattern)
+   Use these classes in any new settings component for consistent UI
+   =================================================================== */
+
+.daia-admin-card,
+.vector-storage-setup,
+.chat-agent-setup,
+.chat-module-settings,
+.chat-page-settings {
+	background: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 12px;
+	padding: 0;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+	overflow: hidden;
+}
+
+.daia-admin-section,
+.vector-storage-setup__section,
+.chat-agent-setup__section,
+.chat-module-settings__section,
+.chat-page-settings__section {
+	padding: 32px;
+	border-bottom: 1.5px solid #e5e7eb;
+}
+
+.daia-admin-section:last-of-type,
+.vector-storage-setup__section:last-of-type,
+.chat-agent-setup__section:last-of-type,
+.chat-module-settings__section:last-of-type,
+.chat-page-settings__section:last-of-type {
+	border-bottom: none;
+}
+
+.daia-admin-section h2,
+.vector-storage-setup__section h2,
+.chat-agent-setup__section h2,
+.chat-module-settings__section h2,
+.chat-page-settings__section h2 {
+	margin: 0 0 8px 0;
+	padding: 0;
+	border: none;
+	font-size: 20px;
+	font-weight: 700;
+	color: #111827;
+	letter-spacing: -0.5px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.daia-admin-section h2::before,
+.vector-storage-setup__section h2::before,
+.chat-agent-setup__section h2::before,
+.chat-module-settings__section h2::before,
+.chat-page-settings__section h2::before {
+	content: '';
+	width: 4px;
+	height: 24px;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	border-radius: 2px;
+}
+
+.daia-admin-section > p,
+.vector-storage-setup__section > p,
+.chat-agent-setup__section > p,
+.chat-module-settings__section > p,
+.chat-page-settings__section > p {
+	margin: 0 0 32px 0;
+	color: #6b7280;
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+/* ===================================================================
+   Common Field Styles
+   =================================================================== */
+
+.daia-admin-field,
+.vector-storage-setup__field,
+.chat-agent-setup__field,
+.chat-module-settings__field,
+.chat-page-settings__field {
+	margin-bottom: 28px;
+	position: relative;
+}
+
+.daia-admin-field:last-of-type,
+.vector-storage-setup__field:last-of-type,
+.chat-agent-setup__field:last-of-type,
+.chat-module-settings__field:last-of-type,
+.chat-page-settings__field:last-of-type {
+	margin-bottom: 0;
+}
+
+.daia-admin-field label,
+.vector-storage-setup__field label,
+.chat-agent-setup__field label,
+.chat-module-settings__field label,
+.chat-page-settings__field label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 600;
+	font-size: 14px;
+	color: #374151;
+	letter-spacing: -0.2px;
+}
+
+.daia-admin-field .components-base-control__label,
+.vector-storage-setup__field .components-base-control__label,
+.chat-agent-setup__field .components-base-control__label,
+.chat-module-settings__field .components-base-control__label,
+.chat-page-settings__field .components-base-control__label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: 600;
+	font-size: 14px;
+	color: #374151;
+	letter-spacing: -0.2px;
+}
+
+.daia-admin-field .components-text-control__input,
+.daia-admin-field .components-textarea-control__input,
+.daia-admin-field .components-select-control__input,
+.vector-storage-setup__field .components-text-control__input,
+.vector-storage-setup__field .components-textarea-control__input,
+.vector-storage-setup__field .components-select-control__input,
+.chat-agent-setup__field .components-text-control__input,
+.chat-agent-setup__field .components-textarea-control__input,
+.chat-agent-setup__field .components-select-control__input,
+.chat-module-settings__field .components-text-control__input,
+.chat-module-settings__field .components-textarea-control__input,
+.chat-module-settings__field .components-select-control__input,
+.chat-page-settings__field .components-text-control__input,
+.chat-page-settings__field .components-textarea-control__input,
+.chat-page-settings__field .components-select-control__input {
+	border: 1.5px solid #e5e7eb;
+	border-radius: 8px;
+	padding: 10px 14px;
+	font-size: 14px;
+	transition: all 0.2s ease;
+	background: #ffffff;
+}
+
+.daia-admin-field .components-text-control__input:focus,
+.daia-admin-field .components-textarea-control__input:focus,
+.daia-admin-field .components-select-control__input:focus,
+.vector-storage-setup__field .components-text-control__input:focus,
+.vector-storage-setup__field .components-textarea-control__input:focus,
+.vector-storage-setup__field .components-select-control__input:focus,
+.chat-agent-setup__field .components-text-control__input:focus,
+.chat-agent-setup__field .components-textarea-control__input:focus,
+.chat-agent-setup__field .components-select-control__input:focus,
+.chat-module-settings__field .components-text-control__input:focus,
+.chat-module-settings__field .components-textarea-control__input:focus,
+.chat-module-settings__field .components-select-control__input:focus,
+.chat-page-settings__field .components-text-control__input:focus,
+.chat-page-settings__field .components-textarea-control__input:focus,
+.chat-page-settings__field .components-select-control__input:focus {
+	border-color: #667eea;
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+	outline: none;
+}
+
+.daia-admin-field .components-textarea-control__input,
+.chat-agent-setup__field .components-textarea-control__input {
+	min-height: 120px;
+	resize: vertical;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	line-height: 1.6;
+}
+
+.daia-admin-field .components-range-control__wrapper,
+.chat-agent-setup__field .components-range-control__wrapper {
+	margin-top: 8px;
+}
+
+.daia-admin-field .components-range-control__track,
+.chat-agent-setup__field .components-range-control__track {
+	height: 6px;
+	background: #e5e7eb;
+	border-radius: 3px;
+}
+
+.daia-admin-field .components-range-control__thumb,
+.chat-agent-setup__field .components-range-control__thumb {
+	width: 20px;
+	height: 20px;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	border: 3px solid #ffffff;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.daia-admin-field .components-range-control__thumb:focus,
+.chat-agent-setup__field .components-range-control__thumb:focus {
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.daia-admin-field .components-range-control__value,
+.chat-agent-setup__field .components-range-control__value {
+	font-weight: 600;
+	color: #667eea;
+	font-size: 14px;
+}
+
+.daia-admin-field .components-base-control__help,
+.vector-storage-setup__field .components-base-control__help,
+.chat-agent-setup__field .components-base-control__help,
+.chat-module-settings__field .components-base-control__help,
+.chat-page-settings__field .components-base-control__help {
+	margin-top: 6px;
+	font-size: 13px;
+	color: #6b7280;
+	line-height: 1.5;
+	font-style: normal;
+}
+
+.daia-admin-field .description,
+.vector-storage-setup__field .description,
+.chat-agent-setup__field .description,
+.chat-module-settings__field .description,
+.chat-page-settings__field .description {
+	margin-top: 8px;
+	font-style: normal;
+	color: #6b7280;
+	font-size: 13px;
+	line-height: 1.6;
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+}
+
+.daia-admin-field .description::before,
+.vector-storage-setup__field .description::before,
+.chat-agent-setup__field .description::before,
+.chat-module-settings__field .description::before,
+.chat-page-settings__field .description::before {
+	content: 'ℹ️';
+	font-size: 14px;
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+.daia-admin-field .components-toggle-control,
+.vector-storage-setup__field .components-toggle-control {
+	margin-bottom: 0;
+}
+
+.daia-admin-field .components-toggle-control__label,
+.vector-storage-setup__field .components-toggle-control__label {
+	font-weight: 600;
+	font-size: 14px;
+	color: #374151;
+}
+
+.daia-admin-field .components-toggle-control__help,
+.vector-storage-setup__field .components-toggle-control__help {
+	margin-top: 8px;
+	font-size: 13px;
+	color: #6b7280;
+}
+
+/* ===================================================================
+   Common Field Groups (Side-by-Side Layout)
+   =================================================================== */
+
+.daia-admin-field-group,
+.vector-storage-setup__field-group,
+.chat-agent-setup__field-group {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 24px;
+	margin-bottom: 28px;
+}
+
+/* ===================================================================
+   Common Actions/Button Area
+   =================================================================== */
+
+.daia-admin-actions,
+.vector-storage-setup__actions,
+.chat-agent-setup__actions,
+.chat-module-settings__actions,
+.chat-page-settings__actions {
+	margin-top: 40px;
+	padding-top: 24px;
+	padding-left: 32px;
+	padding-right: 32px;
+	border-top: 1.5px solid #e5e7eb;
+	display: flex;
+	justify-content: flex-end;
+	gap: 12px;
+}
+
+/* Chat Agent tab: align Save button with card bottom padding */
+.daia-admin-actions {
+	margin-top: 0;
+	padding-bottom: 24px;
+	border-top: none;
+}
+
+.daia-admin-actions .components-button,
+.vector-storage-setup__actions .components-button,
+.chat-agent-setup__actions .components-button,
+.chat-module-settings__actions .components-button,
+.chat-page-settings__actions .components-button {
+	padding: 10px 24px;
+	font-size: 14px;
+	font-weight: 600;
+	border-radius: 8px;
+	height: auto;
+	min-height: 42px;
+	transition: all 0.2s ease;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.daia-admin-actions .components-button.is-primary,
+.vector-storage-setup__actions .components-button.is-primary,
+.chat-agent-setup__actions .components-button.is-primary,
+.chat-module-settings__actions .components-button.is-primary,
+.chat-page-settings__actions .components-button.is-primary {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	border: none;
+	color: #ffffff;
+}
+
+.daia-admin-actions .components-button.is-primary:hover:not(:disabled),
+.vector-storage-setup__actions .components-button.is-primary:hover:not(:disabled),
+.chat-agent-setup__actions .components-button.is-primary:hover:not(:disabled),
+.chat-module-settings__actions .components-button.is-primary:hover:not(:disabled),
+.chat-page-settings__actions .components-button.is-primary:hover:not(:disabled) {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.daia-admin-actions .components-button.is-primary:active:not(:disabled),
+.vector-storage-setup__actions .components-button.is-primary:active:not(:disabled),
+.chat-agent-setup__actions .components-button.is-primary:active:not(:disabled),
+.chat-module-settings__actions .components-button.is-primary:active:not(:disabled),
+.chat-page-settings__actions .components-button.is-primary:active:not(:disabled) {
+	/* Make press animation visible even when the hover state isn't active. */
+	transform: translateY(1px);
+}
+
+.daia-admin-actions .components-button.is-secondary:active:not(:disabled),
+.vector-storage-setup__actions .components-button.is-secondary:active:not(:disabled),
+.chat-agent-setup__actions .components-button.is-secondary:active:not(:disabled),
+.chat-module-settings__actions .components-button.is-secondary:active:not(:disabled),
+.chat-page-settings__actions .components-button.is-secondary:active:not(:disabled) {
+	transform: translateY(1px);
+}
+
+.daia-admin-actions .components-button.is-primary:disabled,
+.vector-storage-setup__actions .components-button.is-primary:disabled,
+.chat-agent-setup__actions .components-button.is-primary:disabled,
+.chat-module-settings__actions .components-button.is-primary:disabled,
+.chat-page-settings__actions .components-button.is-primary:disabled {
+	background: #d1d5db;
+	opacity: 0.7;
+	cursor: not-allowed;
+}
+
+.daia-admin-actions .components-button.is-primary.is-busy,
+.vector-storage-setup__actions .components-button.is-primary.is-busy,
+.chat-agent-setup__actions .components-button.is-primary.is-busy,
+.chat-module-settings__actions .components-button.is-primary.is-busy,
+.chat-page-settings__actions .components-button.is-primary.is-busy {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	opacity: 0.8;
+}
+
+.daia-admin-actions .components-button.is-secondary,
+.vector-storage-setup__actions .components-button.is-secondary {
+	background: #ffffff;
+	border: 1.5px solid #e5e7eb;
+	color: #374151;
+}
+
+.daia-admin-actions .components-button.is-secondary:hover:not(:disabled),
+.vector-storage-setup__actions .components-button.is-secondary:hover:not(:disabled) {
+	background: #f9fafb;
+	border-color: #d1d5db;
+	transform: translateY(-1px);
+}
+
+.daia-admin-actions .components-button.is-secondary:disabled,
+.vector-storage-setup__actions .components-button.is-secondary:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* ===================================================================
+   Special Field Variants (API Keys, URLs, etc.)
+   Apply these additional classes to highlight important fields
+   =================================================================== */
+
+.daia-admin-field--api-key,
+.chat-agent-setup__field-api-key,
+.vector-storage-setup__field-secret-key {
+	background: linear-gradient(135deg, #f8f9ff 0%, #f5f7ff 100%);
+	padding: 20px;
+	border-radius: 10px;
+	border: 1.5px solid #e0e7ff;
+	margin-bottom: 28px;
+}
+
+.daia-admin-field--api-key label,
+.chat-agent-setup__field-api-key label,
+.vector-storage-setup__field-secret-key label {
+	color: #4f46e5;
+}
+
+.daia-admin-field--api-key .components-text-control__input,
+.chat-agent-setup__field-api-key .components-text-control__input,
+.vector-storage-setup__field-secret-key .components-text-control__input {
+	background: #ffffff;
+	border-color: #c7d2fe;
+}
+
+.daia-admin-field--api-key .components-text-control__input:focus,
+.chat-agent-setup__field-api-key .components-text-control__input:focus,
+.vector-storage-setup__field-secret-key .components-text-control__input:focus {
+	border-color: #667eea;
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.daia-admin-field--api-key .components-button,
+.chat-agent-setup__field-api-key .components-button,
+.vector-storage-setup__field-secret-key .components-button {
+	border-radius: 8px;
+	font-weight: 600;
+	height: 40px;
+	padding: 0 16px;
+	transition: all 0.2s ease;
+}
+
+.daia-admin-field--api-key .components-button:hover,
+.chat-agent-setup__field-api-key .components-button:hover,
+.vector-storage-setup__field-secret-key .components-button:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.daia-admin-field--api-url,
+.vector-storage-setup__field-api-url {
+	background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+	padding: 20px;
+	border-radius: 10px;
+	border: 1.5px solid #bae6fd;
+	margin-bottom: 28px;
+}
+
+.daia-admin-field--api-url label,
+.vector-storage-setup__field-api-url label {
+	color: #0369a1;
+}
+
+.daia-admin-field--api-url .components-text-control__input,
+.vector-storage-setup__field-api-url .components-text-control__input {
+	background: #ffffff;
+	border-color: #7dd3fc;
+}
+
+.daia-admin-field--api-url .components-text-control__input:focus,
+.vector-storage-setup__field-api-url .components-text-control__input:focus {
+	border-color: #667eea;
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.daia-admin-field--website-id,
+.vector-storage-setup__field-website-id {
+	background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+	padding: 20px;
+	border-radius: 10px;
+	border: 1.5px solid #fcd34d;
+	margin-bottom: 28px;
+}
+
+.daia-admin-field--website-id label,
+.vector-storage-setup__field-website-id label {
+	color: #92400e;
+}
+
+.daia-admin-field--website-id .components-text-control__input,
+.vector-storage-setup__field-website-id .components-text-control__input {
+	background: #ffffff;
+	border-color: #fbbf24;
+}
+
+.daia-admin-field--website-id .components-text-control__input:focus,
+.vector-storage-setup__field-website-id .components-text-control__input:focus {
+	border-color: #667eea;
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+/* ===================================================================
+   Select Control Enhancements
+   =================================================================== */
+
+.daia-admin-field .components-select-control__input,
+.chat-agent-setup__field .components-select-control__input {
+	background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	appearance: none;
+	padding-right: 40px;
 }
 
 .chat-agent-setup {
@@ -271,7 +784,7 @@
 }
 
 /* Loading state */
-.directorist-smart-assistant-admin .loading-state {
+.directorist-ai-agents-admin .loading-state {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -280,7 +793,7 @@
 	font-size: 14px;
 }
 
-.directorist-smart-assistant-admin .loading-state::before {
+.directorist-ai-agents-admin .loading-state::before {
 	content: '';
 	width: 24px;
 	height: 24px;
@@ -313,7 +826,7 @@
 
 /* Responsive */
 @media (max-width: 782px) {
-	.directorist-smart-assistant-admin {
+	.directorist-ai-agents-admin {
 		padding: 0 10px;
 	}
 
@@ -346,456 +859,117 @@
 	font-size: 14px;
 }
 
-/* Vector Storage Setup Styles */
-.vector-storage-setup {
-	background: #ffffff;
-	border: 1px solid #e5e7eb;
-	border-radius: 12px;
-	padding: 0;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-	overflow: hidden;
-}
+/* ===================================================================
+   Loading State
+   =================================================================== */
 
-.vector-storage-setup__section {
-	padding: 32px;
-	border-bottom: 1.5px solid #e5e7eb;
-}
-
-.vector-storage-setup__section:last-of-type {
-	border-bottom: none;
-}
-
-.vector-storage-setup__section h2 {
-	margin: 0 0 8px 0;
-	padding: 0;
-	border: none;
-	font-size: 20px;
-	font-weight: 700;
-	color: #111827;
-	letter-spacing: -0.5px;
+.directorist-ai-agents-admin .loading-state {
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	justify-content: center;
+	padding: 60px 20px;
+	color: #6b7280;
+	font-size: 14px;
 }
 
-.vector-storage-setup__section h2::before {
+.directorist-ai-agents-admin .loading-state::before {
 	content: '';
-	width: 4px;
+	width: 24px;
 	height: 24px;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	border-radius: 2px;
+	border: 3px solid #e5e7eb;
+	border-top-color: #667eea;
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+	margin-right: 12px;
 }
 
-.vector-storage-setup__section > p {
-	margin: 0 0 32px 0;
-	color: #6b7280;
-	font-size: 14px;
-	line-height: 1.6;
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
 }
 
-.vector-storage-setup__field {
-	margin-bottom: 28px;
-	position: relative;
-}
-
-.vector-storage-setup__field:last-of-type {
-	margin-bottom: 0;
-}
-
-.vector-storage-setup__field label {
-	display: block;
-	margin-bottom: 8px;
-	font-weight: 600;
-	font-size: 14px;
-	color: #374151;
-	letter-spacing: -0.2px;
-}
-
-.vector-storage-setup__field .components-base-control__label {
-	display: block;
-	margin-bottom: 8px;
-	font-weight: 600;
-	font-size: 14px;
-	color: #374151;
-	letter-spacing: -0.2px;
-}
-
-.vector-storage-setup__field .components-text-control__input,
-.vector-storage-setup__field .components-textarea-control__input {
-	border: 1.5px solid #e5e7eb;
-	border-radius: 8px;
-	padding: 10px 14px;
-	font-size: 14px;
-	transition: all 0.2s ease;
-	background: #ffffff;
-}
-
-.vector-storage-setup__field .components-text-control__input:focus,
-.vector-storage-setup__field .components-textarea-control__input:focus {
-	border-color: #667eea;
-	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-	outline: none;
-}
-
-.vector-storage-setup__field .components-base-control__help {
-	margin-top: 6px;
-	font-size: 13px;
-	color: #6b7280;
-	line-height: 1.5;
-	font-style: normal;
-}
-
-.vector-storage-setup__field .description {
-	margin-top: 8px;
-	font-style: normal;
-	color: #6b7280;
-	font-size: 13px;
-	line-height: 1.6;
-	display: flex;
-	align-items: flex-start;
-	gap: 6px;
-}
-
-.vector-storage-setup__field .description::before {
-	content: 'ℹ️';
-	font-size: 14px;
-	flex-shrink: 0;
-	margin-top: 1px;
-}
-
-.vector-storage-setup__field-api-url {
-	background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-	padding: 20px;
-	border-radius: 10px;
-	border: 1.5px solid #bae6fd;
-	margin-bottom: 28px;
-}
-
-.vector-storage-setup__field-api-url label {
-	color: #0369a1;
-}
-
-.vector-storage-setup__field-api-url .components-text-control__input {
-	background: #ffffff;
-	border-color: #7dd3fc;
-}
-
-.vector-storage-setup__field-api-url .components-text-control__input:focus {
-	border-color: #667eea;
-	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
-}
-
-.vector-storage-setup__field-secret-key {
-	background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-	padding: 20px;
-	border-radius: 10px;
-	border: 1.5px solid #fcd34d;
-	margin-bottom: 28px;
-}
-
-.vector-storage-setup__field-secret-key label {
-	color: #92400e;
-}
-
-.vector-storage-setup__field-secret-key .components-text-control__input {
-	background: #ffffff;
-	border-color: #fbbf24;
-}
-
-.vector-storage-setup__field-secret-key .components-text-control__input:focus {
-	border-color: #667eea;
-	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
-}
-
-.vector-storage-setup__field-secret-key .components-button {
-	border-radius: 8px;
-	font-weight: 600;
-	height: 40px;
-	padding: 0 16px;
-	transition: all 0.2s ease;
-}
-
-.vector-storage-setup__field-secret-key .components-button:hover {
-	transform: translateY(-1px);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.vector-storage-setup__field .components-toggle-control {
-	margin-bottom: 0;
-}
-
-.vector-storage-setup__field .components-toggle-control__label {
-	font-weight: 600;
-	font-size: 14px;
-	color: #374151;
-}
-
-.vector-storage-setup__field .components-toggle-control__help {
-	margin-top: 8px;
-	font-size: 13px;
-	color: #6b7280;
-}
-
-.vector-storage-setup__field-group {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 24px;
-	margin-bottom: 28px;
-}
+/* ===================================================================
+   Responsive Styles for All Admin Cards
+   =================================================================== */
 
 @media (max-width: 782px) {
-	.vector-storage-setup__field-group {
+	.directorist-ai-agents-admin {
+		padding: 0 10px;
+	}
+
+	.daia-admin-section,
+	.vector-storage-setup__section,
+	.chat-agent-setup__section,
+	.chat-module-settings__section,
+	.chat-page-settings__section {
+		padding: 24px 20px;
+	}
+
+	.daia-admin-field-group,
+	.vector-storage-setup__field-group,
+	.chat-agent-setup__field-group {
 		grid-template-columns: 1fr;
 	}
-}
 
-.vector-storage-setup__actions {
-	margin-top: 40px;
-	padding-top: 24px;
-	border-top: 1.5px solid #e5e7eb;
-	display: flex;
-	justify-content: flex-end;
-	gap: 12px;
-}
-
-.vector-storage-setup__actions .components-button {
-	padding: 10px 24px;
-	font-size: 14px;
-	font-weight: 600;
-	border-radius: 8px;
-	height: auto;
-	min-height: 42px;
-	transition: all 0.2s ease;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.vector-storage-setup__actions .components-button.is-primary {
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	border: none;
-	color: #ffffff;
-}
-
-.vector-storage-setup__actions .components-button.is-primary:hover:not(:disabled) {
-	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.vector-storage-setup__actions .components-button.is-primary:active:not(:disabled) {
-	transform: translateY(0);
-}
-
-.vector-storage-setup__actions .components-button.is-primary:disabled {
-	background: #d1d5db;
-	opacity: 0.7;
-	cursor: not-allowed;
-}
-
-.vector-storage-setup__actions .components-button.is-primary.is-busy {
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	opacity: 0.8;
-}
-
-.vector-storage-setup__actions .components-button.is-secondary {
-	background: #ffffff;
-	border: 1.5px solid #e5e7eb;
-	color: #374151;
-}
-
-.vector-storage-setup__actions .components-button.is-secondary:hover:not(:disabled) {
-	background: #f9fafb;
-	border-color: #d1d5db;
-	transform: translateY(-1px);
-}
-
-.vector-storage-setup__actions .components-button.is-secondary:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-
-/* Responsive */
-@media (max-width: 782px) {
-	.vector-storage-setup__section {
-		padding: 24px 20px;
-	}
-
-	.vector-storage-setup__actions {
+	.daia-admin-actions,
+	.vector-storage-setup__actions,
+	.chat-agent-setup__actions,
+	.chat-module-settings__actions,
+	.chat-page-settings__actions {
 		flex-direction: column;
 	}
 
-	.vector-storage-setup__actions .components-button {
+	.daia-admin-actions .components-button,
+	.vector-storage-setup__actions .components-button,
+	.chat-agent-setup__actions .components-button,
+	.chat-module-settings__actions .components-button,
+	.chat-page-settings__actions .components-button {
 		width: 100%;
 	}
 }
 
-/* Chat Module Settings Styles */
-.chat-module-settings {
-	background: #ffffff;
-	border: 1px solid #e5e7eb;
-	border-radius: 12px;
-	padding: 0;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-	overflow: hidden;
-}
+/* ===================================================================
+   USAGE GUIDE: Creating New Settings Tabs
+   =================================================================== */
 
-.chat-module-settings__section {
-	padding: 32px;
-}
-
-.chat-module-settings__section h2 {
-	margin: 0 0 8px 0;
-	padding: 0;
-	border: none;
-	font-size: 20px;
-	font-weight: 700;
-	color: #111827;
-	letter-spacing: -0.5px;
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
-.chat-module-settings__section h2::before {
-	content: '';
-	width: 4px;
-	height: 24px;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	border-radius: 2px;
-}
-
-.chat-module-settings__section > p {
-	margin: 0 0 32px 0;
-	color: #6b7280;
-	font-size: 14px;
-	line-height: 1.6;
-}
-
-.chat-module-settings__field {
-	margin-bottom: 28px;
-	position: relative;
-}
-
-.chat-module-settings__field:last-of-type {
-	margin-bottom: 0;
-}
-
-.chat-module-settings__field label {
-	display: block;
-	margin-bottom: 8px;
-	font-weight: 600;
-	font-size: 14px;
-	color: #374151;
-	letter-spacing: -0.2px;
-}
-
-.chat-module-settings__field .components-base-control__label {
-	display: block;
-	margin-bottom: 8px;
-	font-weight: 600;
-	font-size: 14px;
-	color: #374151;
-	letter-spacing: -0.2px;
-}
-
-.chat-module-settings__field .components-text-control__input,
-.chat-module-settings__field .components-select-control__input {
-	border: 1.5px solid #e5e7eb;
-	border-radius: 8px;
-	padding: 10px 14px;
-	font-size: 14px;
-	transition: all 0.2s ease;
-	background: #ffffff;
-}
-
-.chat-module-settings__field .components-text-control__input:focus,
-.chat-module-settings__field .components-select-control__input:focus {
-	border-color: #667eea;
-	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-	outline: none;
-}
-
-.chat-module-settings__field .components-base-control__help {
-	margin-top: 6px;
-	font-size: 13px;
-	color: #6b7280;
-	line-height: 1.5;
-	font-style: normal;
-}
-
-.chat-module-settings__field .description {
-	margin-top: 8px;
-	font-style: normal;
-	color: #6b7280;
-	font-size: 13px;
-	line-height: 1.6;
-	display: flex;
-	align-items: flex-start;
-	gap: 6px;
-}
-
-.chat-module-settings__field .description::before {
-	content: 'ℹ️';
-	font-size: 14px;
-	flex-shrink: 0;
-	margin-top: 1px;
-}
-
-.chat-module-settings__actions {
-	margin-top: 40px;
-	padding-top: 24px;
-	border-top: 1.5px solid #e5e7eb;
-	display: flex;
-	justify-content: flex-end;
-	gap: 12px;
-}
-
-.chat-module-settings__actions .components-button {
-	padding: 10px 24px;
-	font-size: 14px;
-	font-weight: 600;
-	border-radius: 8px;
-	height: auto;
-	min-height: 42px;
-	transition: all 0.2s ease;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.chat-module-settings__actions .components-button.is-primary {
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	border: none;
-	color: #ffffff;
-}
-
-.chat-module-settings__actions .components-button.is-primary:hover:not(:disabled) {
-	transform: translateY(-2px);
-	box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.chat-module-settings__actions .components-button.is-primary:active:not(:disabled) {
-	transform: translateY(0);
-}
-
-.chat-module-settings__actions .components-button.is-primary:disabled {
-	background: #d1d5db;
-	opacity: 0.7;
-	cursor: not-allowed;
-}
-
-.chat-module-settings__actions .components-button.is-primary.is-busy {
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-	opacity: 0.8;
-}
-
-/* Responsive */
-@media (max-width: 782px) {
-	.chat-module-settings__section {
-		padding: 24px 20px;
-	}
-
-	.chat-module-settings__actions {
-		flex-direction: column;
-	}
-
-	.chat-module-settings__actions .components-button {
-		width: 100%;
-	}
-}
+/*
+ * To create a new settings tab with consistent styling:
+ *
+ * 1. Use this JSX structure in your React component:
+ *
+ *    <div className="daia-admin-card">
+ *      <div className="daia-admin-section">
+ *        <h2>Section Title</h2>
+ *        <p>Section description (optional)</p>
+ *        
+ *        <div className="daia-admin-field">
+ *          <TextControl label="Field Label" ... />
+ *        </div>
+ *        
+ *        <div className="daia-admin-field">
+ *          <SelectControl label="Another Field" ... />
+ *        </div>
+ *      </div>
+ *      
+ *      <div className="daia-admin-actions">
+ *        <Button isPrimary>Save Settings</Button>
+ *      </div>
+ *    </div>
+ *
+ * 2. Optional: For side-by-side fields, use:
+ *    <div className="daia-admin-field-group">
+ *      <div className="daia-admin-field">...</div>
+ *      <div className="daia-admin-field">...</div>
+ *    </div>
+ *
+ * 3. Optional: For highlighted fields (API keys, URLs), add modifier:
+ *    <div className="daia-admin-field daia-admin-field--api-key">...</div>
+ *    <div className="daia-admin-field daia-admin-field--api-url">...</div>
+ *
+ * 4. Alternatively, use your own naming pattern (e.g., .my-feature-setup__section)
+ *    and the common styles will automatically apply.
+ *
+ * All existing classes (.vector-storage-setup, .chat-agent-setup, etc.) 
+ * inherit from these common styles, so you get consistency across all tabs.
+ */

@@ -2,12 +2,12 @@
 /**
  * Frontend Enqueuer
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Frontend;
+namespace DirectoristAIAgents\Frontend;
 
-use DirectoristSmartAssistant\Settings\Settings_Manager;
+use DirectoristAIAgents\Settings\Settings_Manager;
 
 /**
  * Frontend Enqueuer class
@@ -57,7 +57,7 @@ class Enqueuer {
 		}
 
 		/** Filter whether the chat widget should be loaded on the current page. */
-		return (bool) apply_filters( 'dsa_chat_widget_enabled', true );
+		return (bool) apply_filters( 'daia_chat_widget_enabled', true );
 	}
 
 	/**
@@ -70,7 +70,7 @@ class Enqueuer {
 			return;
 		}
 
-		$asset_path = DIRECTORIST_SMART_ASSISTANT_PLUGIN_DIR . 'assets/build/chat-widget.asset.php';
+		$asset_path = DIRECTORIST_AI_AGENTS_PLUGIN_DIR . 'assets/build/chat-widget.asset.php';
 
 		if ( ! file_exists( $asset_path ) ) {
 			return;
@@ -79,27 +79,28 @@ class Enqueuer {
 		$asset_file = include $asset_path;
 
 		wp_enqueue_script(
-			'directorist-smart-assistant-chat-widget',
-			DIRECTORIST_SMART_ASSISTANT_PLUGIN_URL . 'assets/build/chat-widget.js',
+			'directorist-ai-agents-chat-widget',
+			DIRECTORIST_AI_AGENTS_PLUGIN_URL . 'assets/build/chat-widget.js',
 			$asset_file['dependencies'] ?? array(),
-			$asset_file['version'] ?? DIRECTORIST_SMART_ASSISTANT_VERSION,
+			$asset_file['version'] ?? DIRECTORIST_AI_AGENTS_VERSION,
 			true
 		);
 
 		wp_enqueue_style(
-			'directorist-smart-assistant-chat-widget',
-			DIRECTORIST_SMART_ASSISTANT_PLUGIN_URL . 'assets/build/chat-widget.css',
+			'directorist-ai-agents-chat-widget',
+			DIRECTORIST_AI_AGENTS_PLUGIN_URL . 'assets/build/chat-widget.css',
 			array(),
-			$asset_file['version'] ?? DIRECTORIST_SMART_ASSISTANT_VERSION
+			$asset_file['version'] ?? DIRECTORIST_AI_AGENTS_VERSION
 		);
 
 		$settings = Settings_Manager::get_instance()->get_settings();
 
 		wp_localize_script(
-			'directorist-smart-assistant-chat-widget',
-			'directoristSmartAssistantChat',
+			'directorist-ai-agents-chat-widget',
+			'directoristAIAgentsChat',
 			array(
-				'apiUrl'   => rest_url( 'directorist-smart-assistant/v1/' ),
+				'apiUrl'   => rest_url( 'directorist-ai-agents/v1/' ),
+				// Localized settings consumed by the chat widget React app.
 				'nonce'    => wp_create_nonce( 'wp_rest' ),
 				'settings' => array(
 					'position'  => $settings['chat_widget_position'] ?? 'bottom-right',
@@ -120,7 +121,7 @@ class Enqueuer {
 			return;
 		}
 		?>
-		<div id="directorist-smart-assistant-chat-root"></div>
+		<div id="directorist-ai-agents-chat-root"></div>
 		<?php
 	}
 }

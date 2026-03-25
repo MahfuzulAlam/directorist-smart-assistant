@@ -2,12 +2,12 @@
 /**
  * Admin Menu
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Admin;
+namespace DirectoristAIAgents\Admin;
 
-use DirectoristSmartAssistant\Admin\Enqueuer as Admin_Enqueuer;
+use DirectoristAIAgents\Admin\Enqueuer as Admin_Enqueuer;
 
 /**
  * Admin Menu class
@@ -53,17 +53,17 @@ class Admin_Menu {
 	 * @return void
 	 */
 	public function add_admin_menu(): void {
-		// Add submenu under Directorist
+		// Add submenu under Directorist.
 		$this->page_hook = add_submenu_page(
 			'edit.php?post_type=at_biz_dir',
-			__( 'Smart Assistant', 'directorist-smart-assistant' ),
-			__( 'Smart Assistant', 'directorist-smart-assistant' ),
+			__( 'AI Agents', 'directorist-ai-agents' ),
+			__( 'AI Agents', 'directorist-ai-agents' ),
 			'manage_options',
-			'directorist-smart-assistant',
+			'directorist-ai-agents',
 			array( $this, 'render_admin_page' )
 		);
 
-		// Enqueue scripts only on this page
+		// Enqueue scripts only on this page.
 		if ( $this->page_hook ) {
 			add_action( "load-{$this->page_hook}", array( $this, 'enqueue_admin_assets' ) );
 		}
@@ -78,7 +78,7 @@ class Admin_Menu {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-			<div id="directorist-smart-assistant-admin-root"></div>
+			<div id="directorist-ai-agents-admin-root"></div>
 		</div>
 		<?php
 	}

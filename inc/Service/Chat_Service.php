@@ -4,14 +4,14 @@
  *
  * Handles chat message processing, prompt building, and context assembly.
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Service;
+namespace DirectoristAIAgents\Service;
 
-use DirectoristSmartAssistant\Settings\Settings_Manager;
-use DirectoristSmartAssistant\Vector\Vector_Query;
-use DirectoristSmartAssistant\Helpers\Listing_Helper;
+use DirectoristAIAgents\Settings\Settings_Manager;
+use DirectoristAIAgents\Vector\Vector_Query;
+use DirectoristAIAgents\Helpers\Listing_Helper;
 
 /**
  * Chat Service class
@@ -56,7 +56,7 @@ class Chat_Service {
 		if ( ! $client ) {
 			return new \WP_Error(
 				'not_configured',
-				__( 'Vector storage API credentials are not configured.', 'directorist-smart-assistant' )
+				__( 'Vector storage API credentials are not configured.', 'directorist-ai-agents' )
 			);
 		}
 
@@ -82,14 +82,14 @@ class Chat_Service {
 		$confidence   = $context['confidence'] ?? 0;
 
 		/** Fires after context decision is made. */
-		do_action( 'dsa_context_decided', $context, $message, $conversation );
+		do_action( 'daia_context_decided', $context, $message, $conversation );
 
 		// Step 2: Handle triggers (email, visit listing).
 		if ( 'trigger' === $action ) {
 			$trigger_response = $this->handle_trigger( $trigger_type, $listing_id, $message );
 
 			/** Fires after trigger action is handled. */
-			do_action( 'dsa_trigger_handled', $trigger_type, $listing_id, $trigger_response );
+			do_action( 'daia_trigger_handled', $trigger_type, $listing_id, $trigger_response );
 
 			return $trigger_response;
 		}
@@ -103,13 +103,13 @@ class Chat_Service {
 			$listings_context = $this->get_listings_context( $message );
 
 			/** Filter the listings context string before it is injected into the system prompt. */
-			$listings_context = apply_filters( 'dsa_listings_context', $listings_context, $message );
+			$listings_context = apply_filters( 'daia_listings_context', $listings_context, $message );
 		}
 
 		$system_prompt = $this->build_system_prompt( $settings, $listings_context );
 
 		/** Filter the full system prompt before it is sent to the AI. */
-		$system_prompt = apply_filters( 'dsa_system_prompt', $system_prompt, $message );
+		$system_prompt = apply_filters( 'daia_system_prompt', $system_prompt, $message );
 
 		$messages = $this->build_messages( $system_prompt, $conversation, $message );
 
@@ -126,12 +126,12 @@ class Chat_Service {
 
 		if ( is_wp_error( $response ) ) {
 			/** Fires when a chat API call fails. */
-			do_action( 'dsa_chat_error', $message, $response );
+			do_action( 'daia_chat_error', $message, $response );
 			return $response;
 		}
 
 		/** Fires after a successful chat API response. */
-		do_action( 'dsa_after_chat_response', $message, $response );
+		do_action( 'daia_after_chat_response', $message, $response );
 
 		return $response;
 	}
@@ -151,7 +151,7 @@ class Chat_Service {
 			case 'contact_listing_owner':
 				if ( empty( $listing_id ) ) {
 					return array(
-						'message' => __( 'I couldn\'t identify which listing you want to contact. Could you please specify the listing name?', 'directorist-smart-assistant' ),
+						'message' => __( 'I couldn\'t identify which listing you want to contact. Could you please specify the listing name?', 'directorist-ai-agents' ),
 					);
 				}
 
@@ -162,14 +162,14 @@ class Chat_Service {
 					return array(
 						'message' => sprintf(
 							/* translators: %s: Listing title */
-							__( 'Great! I\'ve sent your message to the owner of "%s". They should get back to you soon.', 'directorist-smart-assistant' ),
+							__( 'Great! I\'ve sent your message to the owner of "%s". They should get back to you soon.', 'directorist-ai-agents' ),
 							$listing_title
 						),
 					);
 				}
 
 				return array(
-					'message' => __( 'Sorry, I couldn\'t send the email at this time. Please try again later or contact the listing owner directly.', 'directorist-smart-assistant' ),
+					'message' => __( 'Sorry, I couldn\'t send the email at this time. Please try again later or contact the listing owner directly.', 'directorist-ai-agents' ),
 				);
 
 			case 'send_email_admin':
@@ -177,18 +177,18 @@ class Chat_Service {
 
 				if ( $result ) {
 					return array(
-						'message' => __( 'Thank you! I\'ve forwarded your message to our admin team. They will review it and get back to you shortly.', 'directorist-smart-assistant' ),
+						'message' => __( 'Thank you! I\'ve forwarded your message to our admin team. They will review it and get back to you shortly.', 'directorist-ai-agents' ),
 					);
 				}
 
 				return array(
-					'message' => __( 'Sorry, I couldn\'t send your message to the admin at this time. Please try again later.', 'directorist-smart-assistant' ),
+					'message' => __( 'Sorry, I couldn\'t send your message to the admin at this time. Please try again later.', 'directorist-ai-agents' ),
 				);
 
 			case 'visit_listing':
 				if ( empty( $listing_id ) ) {
 					return array(
-						'message' => __( 'I couldn\'t identify which listing you want to visit. Could you please be more specific?', 'directorist-smart-assistant' ),
+						'message' => __( 'I couldn\'t identify which listing you want to visit. Could you please be more specific?', 'directorist-ai-agents' ),
 					);
 				}
 
@@ -196,7 +196,7 @@ class Chat_Service {
 
 				if ( empty( $listing_url ) ) {
 					return array(
-						'message' => __( 'Sorry, I couldn\'t find that listing. It may have been removed or is no longer available.', 'directorist-smart-assistant' ),
+						'message' => __( 'Sorry, I couldn\'t find that listing. It may have been removed or is no longer available.', 'directorist-ai-agents' ),
 					);
 				}
 
@@ -206,7 +206,7 @@ class Chat_Service {
 				return array(
 					'message'     => sprintf(
 						/* translators: 1: Listing title, 2: Listing URL */
-						__( 'Here\'s the listing for "%1$s". <a href="%2$s" target="_blank" rel="noopener noreferrer">Click here to open it</a>.', 'directorist-smart-assistant' ),
+						__( 'Here\'s the listing for "%1$s". <a href="%2$s" target="_blank" rel="noopener noreferrer">Click here to open it</a>.', 'directorist-ai-agents' ),
 						esc_html( $listing_title ),
 						esc_url( $listing_url )
 					),
@@ -218,7 +218,7 @@ class Chat_Service {
 			default:
 				// Unknown trigger type, fall back to regular chat.
 				return array(
-					'message' => __( 'I\'m not sure how to help with that. Could you please rephrase your request?', 'directorist-smart-assistant' ),
+					'message' => __( 'I\'m not sure how to help with that. Could you please rephrase your request?', 'directorist-ai-agents' ),
 				);
 		}
 	}
@@ -239,7 +239,7 @@ class Chat_Service {
 		$url = get_permalink( $listing_id );
 
 		/** Filter the listing URL for visit action. */
-		return apply_filters( 'dsa_listing_visit_url', $url, $listing_id );
+		return apply_filters( 'daia_listing_visit_url', $url, $listing_id );
 	}
 
 	/**
@@ -258,7 +258,7 @@ class Chat_Service {
 		if ( ! empty( $website_name ) ) {
 			$system_prompt = sprintf(
 				/* translators: %s: Website name */
-				__( 'You are a helpful assistant for the website - %s. ', 'directorist-smart-assistant' ),
+				__( 'You are a helpful assistant for the website - %s. ', 'directorist-ai-agents' ),
 				$website_name
 			) . $system_prompt . "\n";
 		}
@@ -267,7 +267,7 @@ class Chat_Service {
 		if ( ! empty( $agent_name ) ) {
 			$system_prompt = sprintf(
 				/* translators: %s: Agent name */
-				__( 'Your name is %s. ', 'directorist-smart-assistant' ),
+				__( 'Your name is %s. ', 'directorist-ai-agents' ),
 				$agent_name
 			) . $system_prompt;
 		}
@@ -333,7 +333,7 @@ class Chat_Service {
 		$vector_query = Vector_Query::get_instance();
 
 		/** Filter the number of vector search results returned. */
-		$top_k        = apply_filters( 'dsa_vector_query_top_k', 5 );
+		$top_k        = apply_filters( 'daia_vector_query_top_k', 5 );
 		$query_results = $vector_query->query( $query_text, $top_k );
 
 		if ( is_wp_error( $query_results ) ) {
@@ -394,7 +394,7 @@ class Chat_Service {
 		$post_type = Listing_Helper::get_post_type();
 
 		/** Filter the maximum number of listings loaded in fallback mode (default 50). */
-		$limit = apply_filters( 'dsa_fallback_listings_limit', 50 );
+		$limit = apply_filters( 'daia_fallback_listings_limit', 50 );
 
 		$args = array(
 			'post_type'      => $post_type,

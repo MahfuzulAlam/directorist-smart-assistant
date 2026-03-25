@@ -4,8 +4,8 @@ import { formatMessageContent } from '../shared/formatMessage';
 
 import './index.css';
 
-const SESSION_KEY = 'dsa_session_id';
-const CONV_KEY = 'dsa_widget_conv_id';
+const SESSION_KEY = 'daia_session_id';
+const CONV_KEY = 'daia_widget_conv_id';
 
 function getSessionId() {
 	let id = localStorage.getItem(SESSION_KEY);
@@ -34,13 +34,13 @@ function ChatWidget() {
 
 	const sessionId = getSessionId();
 
-	const widgetSettings = window.directoristSmartAssistantChat?.settings || {
+	const widgetSettings = window.directoristAIAgentsChat?.settings || {
 		position: 'bottom-right',
 		color: '#667eea',
 		agentName: '',
 	};
 
-	const agentName = widgetSettings.agentName || 'Smart Assistant';
+	const agentName = widgetSettings.agentName || 'AI Agents';
 	const positionClass =
 		widgetSettings.position === 'bottom-left'
 			? 'directorist-smart-assistant-chat-widget--left'
@@ -61,7 +61,7 @@ function ChatWidget() {
 	useEffect(() => {
 		if (isOpen && conversationId) {
 			apiFetch({
-				path: `directorist-smart-assistant/v1/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`,
+				path: `directorist-ai-agents/v1/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`,
 			})
 				.then((res) => {
 					if (res.messages && res.messages.length) {
@@ -84,7 +84,7 @@ function ChatWidget() {
 		if (conversationId) return conversationId;
 
 		const res = await apiFetch({
-			path: 'directorist-smart-assistant/v1/conversations',
+			path: 'directorist-ai-agents/v1/conversations',
 			method: 'POST',
 			data: { session_id: sessionId, source: 'widget' },
 		});
@@ -114,7 +114,7 @@ function ChatWidget() {
 			const convId = await ensureConversation();
 
 			const response = await apiFetch({
-				path: `directorist-smart-assistant/v1/conversations/${convId}/messages`,
+				path: `directorist-ai-agents/v1/conversations/${convId}/messages`,
 				method: 'POST',
 				data: { session_id: sessionId, message: userMessage },
 			});
@@ -172,7 +172,7 @@ function ChatWidget() {
 						{messages.length === 0 && (
 							<div className="directorist-smart-assistant-chat-welcome">
 								<p>
-									{agentName && agentName !== 'Smart Assistant'
+									{agentName && agentName !== 'AI Agents'
 										? `Hello! I'm ${agentName}, your AI assistant. How can I help you today?`
 										: "Hello! I'm your AI assistant. How can I help you today?"}
 								</p>
@@ -253,7 +253,7 @@ function ChatWidget() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-	const container = document.getElementById('directorist-smart-assistant-chat-root');
+	const container = document.getElementById('directorist-ai-agents-chat-root');
 	if (container) {
 		const root = createRoot(container);
 		root.render(<ChatWidget />);

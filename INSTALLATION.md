@@ -13,7 +13,7 @@
 ### PHP Dependencies
 
 ```bash
-cd wp-content/plugins/directorist-smart-assistant
+cd wp-content/plugins/directorist-ai-agents
 composer install
 ```
 
@@ -40,12 +40,12 @@ npm run start
 ## Step 3: Activate Plugin
 
 1. Go to WordPress Admin > Plugins
-2. Find "Directorist Smart Assistant"
+2. Find "Directorist - AI Agents"
 3. Click "Activate"
 
 ## Step 4: Configure Settings
 
-1. Navigate to **Directorist > Smart Assistant** in WordPress admin
+1. Navigate to **Directorist > AI Agents** in WordPress admin
 2. Enter your OpenAI API key (get one at https://platform.openai.com/api-keys)
 3. Configure other settings as needed
 4. Click "Save Settings"
@@ -74,7 +74,7 @@ npm run build
 
 - Verify OpenAI API key is correctly configured
 - Check browser console for JavaScript errors
-- Ensure REST API is accessible (check `/wp-json/directorist-smart-assistant/v1/settings`)
+- Ensure REST API is accessible (check `/wp-json/directorist-ai-agents/v1/settings`)
 
 ## Development
 

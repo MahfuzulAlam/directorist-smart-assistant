@@ -4,10 +4,10 @@
  *
  * Database CRUD operations for conversations and messages.
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Provider;
+namespace DirectoristAIAgents\Provider;
 
 /**
  * Chat Provider class
@@ -45,14 +45,16 @@ class Chat_Provider {
 	/**
 	 * Create a new conversation.
 	 *
-	 * @param array $data {
-	 *     @type string $session_id  Client session identifier.
+	 * @param array $data Conversation payload.
+	 *
+	 * @type string $session_id  Client session identifier.
 	 *     @type int    $user_id     WordPress user ID (0 for guests).
 	 *     @type string $title       Conversation title.
 	 *     @type string $source      'widget' or 'page'.
 	 *     @type string $ip_address  Client IP.
 	 *     @type string $user_agent  Client user-agent.
 	 * }
+	 *
 	 * @return int|false Conversation ID or false on failure.
 	 */
 	public function create_conversation( array $data ) {

@@ -4,12 +4,12 @@
  *
  * Shared utility methods used across multiple classes.
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Helpers;
+namespace DirectoristAIAgents\Helpers;
 
-use DirectoristSmartAssistant\Settings\Settings_Manager;
+use DirectoristAIAgents\Settings\Settings_Manager;
 
 /**
  * Listing Helper class

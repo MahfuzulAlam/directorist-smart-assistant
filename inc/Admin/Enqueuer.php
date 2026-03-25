@@ -2,10 +2,10 @@
 /**
  * Admin Enqueuer
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Admin;
+namespace DirectoristAIAgents\Admin;
 
 /**
  * Admin Enqueuer class
@@ -35,7 +35,7 @@ class Enqueuer {
 	 * Constructor
 	 */
 	private function __construct() {
-		// Constructor
+		// Constructor.
 	}
 
 	/**
@@ -44,7 +44,7 @@ class Enqueuer {
 	 * @return void
 	 */
 	public function enqueue(): void {
-		$asset_path = DIRECTORIST_SMART_ASSISTANT_PLUGIN_DIR . 'assets/build/admin.asset.php';
+		$asset_path = DIRECTORIST_AI_AGENTS_PLUGIN_DIR . 'assets/build/admin.asset.php';
 		
 		if ( ! file_exists( $asset_path ) ) {
 			return;
@@ -53,26 +53,27 @@ class Enqueuer {
 		$asset_file = include $asset_path;
 
 		wp_enqueue_script(
-			'directorist-smart-assistant-admin',
-			DIRECTORIST_SMART_ASSISTANT_PLUGIN_URL . 'assets/build/admin.js',
+			'directorist-ai-agents-admin',
+			DIRECTORIST_AI_AGENTS_PLUGIN_URL . 'assets/build/admin.js',
 			$asset_file['dependencies'] ?? array(),
-			$asset_file['version'] ?? DIRECTORIST_SMART_ASSISTANT_VERSION,
+			$asset_file['version'] ?? DIRECTORIST_AI_AGENTS_VERSION,
 			true
 		);
 
 		wp_enqueue_style(
-			'directorist-smart-assistant-admin',
-			DIRECTORIST_SMART_ASSISTANT_PLUGIN_URL . 'assets/build/admin.css',
+			'directorist-ai-agents-admin',
+			DIRECTORIST_AI_AGENTS_PLUGIN_URL . 'assets/build/admin.css',
 			array(),
-			$asset_file['version'] ?? DIRECTORIST_SMART_ASSISTANT_VERSION
+			$asset_file['version'] ?? DIRECTORIST_AI_AGENTS_VERSION
 		);
 
-		// Localize script
+		// Localize script.
 		wp_localize_script(
-			'directorist-smart-assistant-admin',
-			'directoristSmartAssistantAdmin',
+			'directorist-ai-agents-admin',
+			'directoristAIAgentsAdmin',
 			array(
-				'apiUrl'   => rest_url( 'directorist-smart-assistant/v1/' ),
+				'apiUrl'   => rest_url( 'directorist-ai-agents/v1/' ),
+				// JS uses this value for API base URL.
 				'nonce'    => wp_create_nonce( 'wp_rest' ),
 				'settings' => $this->get_settings_for_js(),
 			)
@@ -85,7 +86,7 @@ class Enqueuer {
 	 * @return array
 	 */
 	private function get_settings_for_js(): array {
-		$settings = \DirectoristSmartAssistant\Settings\Settings_Manager::get_instance()->get_settings();
+		$settings = \DirectoristAIAgents\Settings\Settings_Manager::get_instance()->get_settings();
 
 		if ( ! empty( $settings['api_key'] ) ) {
 			$settings['api_key'] = 'sk-***';

@@ -1,5 +1,5 @@
 {
-	"name": "wpxplore/directorist-smart-assistant",
+	"name": "wpxplore/directorist-ai-agents",
 	"version": "1.0.0",
 	"description": "AI-powered chat assistant for Directorist listings using OpenAI",
 	"type": "wordpress-plugin",
@@ -16,12 +16,12 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"DirectoristSmartAssistant\\": "inc/"
+			"DirectoristAIAgents\\": "inc/"
 		}
 	},
 	"scripts": {
 		"post-install-cmd": [
-			"@php -r \"file_exists('.gitignore') || copy('vendor/wpxplore/directorist-smart-assistant/.gitignore.dist', '.gitignore');\""
+			"@php -r \"file_exists('.gitignore') || copy('vendor/wpxplore/directorist-ai-agents/.gitignore.dist', '.gitignore');\""
 		]
 	},
 	"config": {

@@ -4,13 +4,13 @@
  *
  * REST endpoints for conversation and message management.
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\REST_API;
+namespace DirectoristAIAgents\REST_API;
 
-use DirectoristSmartAssistant\Provider\Chat_Provider;
-use DirectoristSmartAssistant\Service\Chat_Service;
+use DirectoristAIAgents\Provider\Chat_Provider;
+use DirectoristAIAgents\Service\Chat_Service;
 
 /**
  * Chat API Controller class
@@ -29,7 +29,7 @@ class Chat_API_Controller {
 	 *
 	 * @var string
 	 */
-	private $namespace = 'directorist-smart-assistant/v1';
+	private $namespace = 'directorist-ai-agents/v1';
 
 	/**
 	 * Chat provider.
@@ -64,6 +64,14 @@ class Chat_API_Controller {
 	 * @return void
 	 */
 	public function register_routes(): void {
+		$namespaces = array_unique(
+			array(
+				$this->namespace,
+			)
+		);
+
+		foreach ( $namespaces as $namespace ) {
+			$this->namespace = $namespace;
 
 		// List conversations (public, rate-limited).
 		register_rest_route(
@@ -227,6 +235,8 @@ class Chat_API_Controller {
 				),
 			)
 		);
+
+		}
 	}
 
 	// ------------------------------------------------------------------
@@ -243,7 +253,7 @@ class Chat_API_Controller {
 		if ( ! $this->check_rate_limit() ) {
 			return new \WP_Error(
 				'rate_limited',
-				__( 'Too many requests. Please try again later.', 'directorist-smart-assistant' ),
+				__( 'Too many requests. Please try again later.', 'directorist-ai-agents' ),
 				array( 'status' => 429 )
 			);
 		}
@@ -303,7 +313,7 @@ class Chat_API_Controller {
 
 		if ( false === $conversation_id ) {
 			return new \WP_REST_Response(
-				array( 'success' => false, 'message' => __( 'Failed to create conversation.', 'directorist-smart-assistant' ) ),
+				array( 'success' => false, 'message' => __( 'Failed to create conversation.', 'directorist-ai-agents' ) ),
 				500
 			);
 		}
@@ -329,7 +339,7 @@ class Chat_API_Controller {
 
 		if ( ! $this->provider->verify_access( $id, $session_id, $user_id ) ) {
 			return new \WP_REST_Response(
-				array( 'success' => false, 'message' => __( 'Conversation not found.', 'directorist-smart-assistant' ) ),
+				array( 'success' => false, 'message' => __( 'Conversation not found.', 'directorist-ai-agents' ) ),
 				404
 			);
 		}
@@ -355,7 +365,7 @@ class Chat_API_Controller {
 
 		if ( ! $this->provider->verify_access( $id, $session_id, $user_id ) ) {
 			return new \WP_REST_Response(
-				array( 'success' => false, 'message' => __( 'Conversation not found.', 'directorist-smart-assistant' ) ),
+				array( 'success' => false, 'message' => __( 'Conversation not found.', 'directorist-ai-agents' ) ),
 				404
 			);
 		}
@@ -364,7 +374,7 @@ class Chat_API_Controller {
 		$this->provider->update_conversation( $id, array( 'title' => $title ) );
 
 		return new \WP_REST_Response(
-			array( 'success' => true, 'message' => __( 'Conversation updated.', 'directorist-smart-assistant' ) ),
+			array( 'success' => true, 'message' => __( 'Conversation updated.', 'directorist-ai-agents' ) ),
 			200
 		);
 	}
@@ -382,7 +392,7 @@ class Chat_API_Controller {
 
 		if ( ! $this->provider->verify_access( $id, $session_id, $user_id ) ) {
 			return new \WP_REST_Response(
-				array( 'success' => false, 'message' => __( 'Conversation not found.', 'directorist-smart-assistant' ) ),
+				array( 'success' => false, 'message' => __( 'Conversation not found.', 'directorist-ai-agents' ) ),
 				404
 			);
 		}
@@ -390,7 +400,7 @@ class Chat_API_Controller {
 		$this->provider->delete_conversation( $id );
 
 		return new \WP_REST_Response(
-			array( 'success' => true, 'message' => __( 'Conversation deleted.', 'directorist-smart-assistant' ) ),
+			array( 'success' => true, 'message' => __( 'Conversation deleted.', 'directorist-ai-agents' ) ),
 			200
 		);
 	}
@@ -409,14 +419,14 @@ class Chat_API_Controller {
 
 		if ( empty( $message ) ) {
 			return new \WP_REST_Response(
-				array( 'success' => false, 'message' => __( 'Message is required.', 'directorist-smart-assistant' ) ),
+				array( 'success' => false, 'message' => __( 'Message is required.', 'directorist-ai-agents' ) ),
 				400
 			);
 		}
 
 		if ( ! $this->provider->verify_access( $conversation_id, $session_id, $user_id ) ) {
 			return new \WP_REST_Response(
-				array( 'success' => false, 'message' => __( 'Conversation not found.', 'directorist-smart-assistant' ) ),
+				array( 'success' => false, 'message' => __( 'Conversation not found.', 'directorist-ai-agents' ) ),
 				404
 			);
 		}
@@ -509,7 +519,7 @@ class Chat_API_Controller {
 
 		if ( ! $conversation ) {
 			return new \WP_REST_Response(
-				array( 'success' => false, 'message' => __( 'Conversation not found.', 'directorist-smart-assistant' ) ),
+				array( 'success' => false, 'message' => __( 'Conversation not found.', 'directorist-ai-agents' ) ),
 				404
 			);
 		}
@@ -530,7 +540,7 @@ class Chat_API_Controller {
 		$this->provider->delete_conversation( $id );
 
 		return new \WP_REST_Response(
-			array( 'success' => true, 'message' => __( 'Conversation deleted.', 'directorist-smart-assistant' ) ),
+			array( 'success' => true, 'message' => __( 'Conversation deleted.', 'directorist-ai-agents' ) ),
 			200
 		);
 	}
@@ -546,10 +556,10 @@ class Chat_API_Controller {
 	 */
 	private function check_rate_limit(): bool {
 		$ip  = $this->get_client_ip();
-		$key = 'dsa_rate_' . md5( $ip );
+		$key = 'daia_rate_' . md5( $ip );
 
-		$max_requests = apply_filters( 'dsa_rate_limit_requests', 20 );
-		$window       = apply_filters( 'dsa_rate_limit_window', MINUTE_IN_SECONDS );
+		$max_requests = apply_filters( 'daia_rate_limit_requests', 20 );
+		$window       = apply_filters( 'daia_rate_limit_window', MINUTE_IN_SECONDS );
 		$data         = get_transient( $key );
 
 		if ( false === $data ) {

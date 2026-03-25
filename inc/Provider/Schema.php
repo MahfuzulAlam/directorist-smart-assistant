@@ -4,10 +4,10 @@
  *
  * Creates and manages custom tables for conversation storage.
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Provider;
+namespace DirectoristAIAgents\Provider;
 
 /**
  * Schema class
@@ -15,7 +15,7 @@ namespace DirectoristSmartAssistant\Provider;
 class Schema {
 
 	const DB_VERSION     = '1.0';
-	const VERSION_OPTION = 'dsa_db_version';
+	const VERSION_OPTION = 'daia_db_version';
 
 	/**
 	 * Get the conversations table name (with WP prefix).
@@ -24,7 +24,7 @@ class Schema {
 	 */
 	public static function conversations_table(): string {
 		global $wpdb;
-		return $wpdb->prefix . 'dsa_conversations';
+		return $wpdb->prefix . 'daia_conversations';
 	}
 
 	/**
@@ -34,7 +34,7 @@ class Schema {
 	 */
 	public static function messages_table(): string {
 		global $wpdb;
-		return $wpdb->prefix . 'dsa_messages';
+		return $wpdb->prefix . 'daia_messages';
 	}
 
 	/**
@@ -94,9 +94,9 @@ class Schema {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
-		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}dsa_messages" );
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}daia_messages" );
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange
-		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}dsa_conversations" );
+		$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}daia_conversations" );
 
 		delete_option( self::VERSION_OPTION );
 	}

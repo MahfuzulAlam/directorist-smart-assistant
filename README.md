@@ -1,10 +1,10 @@
-# Directorist Smart Assistant
+# Directorist - AI Agents
 
 AI-powered chat assistant for Directorist listings using OpenAI.
 
 ## Description
 
-Directorist Smart Assistant is a WordPress plugin extension for Directorist that adds an AI-powered chat assistant to your directory website. The assistant can answer questions about your listings using OpenAI's GPT models.
+Directorist - AI Agents is a WordPress plugin extension for Directorist that adds an AI-powered chat experience to your directory website. The AI Agents can answer questions about your listings using OpenAI's GPT models.
 
 ## Features
 
@@ -23,7 +23,7 @@ Directorist Smart Assistant is a WordPress plugin extension for Directorist that
 
 ## Installation
 
-1. Upload the plugin files to `/wp-content/plugins/directorist-smart-assistant/`
+1. Upload the plugin files to `/wp-content/plugins/directorist-ai-agents/`
 2. Install dependencies:
    ```bash
    composer install
@@ -34,7 +34,7 @@ Directorist Smart Assistant is a WordPress plugin extension for Directorist that
    npm run build
    ```
 4. Activate the plugin through the 'Plugins' menu in WordPress
-5. Navigate to Directorist > Smart Assistant to configure your OpenAI API key
+5. Navigate to Directorist > AI Agents to configure your OpenAI API key
 
 ## Development
 
@@ -59,7 +59,7 @@ Directorist Smart Assistant is a WordPress plugin extension for Directorist that
 ### Project Structure
 
 ```
-directorist-smart-assistant/
+directorist-ai-agents/
 ├── assets/
 │   ├── src/
 │   │   ├── admin/          # Admin React components
@@ -73,12 +73,12 @@ directorist-smart-assistant/
 ├── languages/              # Translation files
 ├── composer.json           # PHP dependencies
 ├── package.json            # Node dependencies
-└── directorist-smart-assistant.php  # Main plugin file
+└── directorist-ai-agents.php  # Main plugin file
 ```
 
 ## Configuration
 
-1. Go to **Directorist > Smart Assistant** in WordPress admin
+1. Go to **Directorist > AI Agents** in WordPress admin
 2. Enter your OpenAI API key (get one at https://platform.openai.com/api-keys)
 3. Select your preferred GPT model
 4. Customize the system prompt

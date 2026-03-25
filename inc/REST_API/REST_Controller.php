@@ -2,15 +2,15 @@
 /**
  * REST API Controller
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\REST_API;
+namespace DirectoristAIAgents\REST_API;
 
-use DirectoristSmartAssistant\Settings\Settings_Manager;
-use DirectoristSmartAssistant\Service\Chat_Service;
-use DirectoristSmartAssistant\Vector\Vector_Sync;
-use DirectoristSmartAssistant\Helpers\Listing_Helper;
+use DirectoristAIAgents\Settings\Settings_Manager;
+use DirectoristAIAgents\Service\Chat_Service;
+use DirectoristAIAgents\Vector\Vector_Sync;
+use DirectoristAIAgents\Helpers\Listing_Helper;
 
 /**
  * REST API Controller class
@@ -29,7 +29,7 @@ class REST_Controller {
 	 *
 	 * @var string
 	 */
-	private $namespace = 'directorist-smart-assistant/v1';
+	private $namespace = 'directorist-ai-agents/v1';
 
 	/**
 	 * Get instance
@@ -56,7 +56,15 @@ class REST_Controller {
 	 * @return void
 	 */
 	public function register_routes(): void {
-		// Settings endpoints.
+		$namespaces = array_unique(
+			array(
+				$this->namespace,
+			)
+		);
+
+		foreach ( $namespaces as $namespace ) {
+			// Settings endpoints.
+			$this->namespace = $namespace;
 		register_rest_route(
 			$this->namespace,
 			'/settings',
@@ -75,89 +83,90 @@ class REST_Controller {
 			)
 		);
 
-		// Chat endpoint (public, rate-limited).
-		register_rest_route(
-			$this->namespace,
-			'/chat',
-			array(
+			// Chat endpoint (public, rate-limited).
+			register_rest_route(
+				$this->namespace,
+				'/chat',
 				array(
-					'methods'             => 'POST',
-					'callback'            => array( $this, 'handle_chat' ),
-					'permission_callback' => array( $this, 'check_chat_permission' ),
-					'args'                => array(
-						'message'      => array(
-							'type'              => 'string',
-							'required'          => true,
-							'sanitize_callback' => 'sanitize_textarea_field',
-						),
-						'conversation' => array(
-							'type'     => 'array',
-							'required' => false,
-							'default'  => array(),
-						),
-					),
-				),
-			)
-		);
-
-		// Listings endpoint (admin-only).
-		register_rest_route(
-			$this->namespace,
-			'/listings',
-			array(
-				array(
-					'methods'             => 'GET',
-					'callback'            => array( $this, 'get_listings' ),
-					'permission_callback' => array( $this, 'check_admin_permission' ),
-				),
-			)
-		);
-
-		// Directory types endpoint.
-		register_rest_route(
-			$this->namespace,
-			'/directory-types',
-			array(
-				array(
-					'methods'             => 'GET',
-					'callback'            => array( $this, 'get_directory_types' ),
-					'permission_callback' => array( $this, 'check_admin_permission' ),
-				),
-			)
-		);
-
-		// Listing statuses endpoint.
-		register_rest_route(
-			$this->namespace,
-			'/listing-statuses',
-			array(
-				array(
-					'methods'             => 'GET',
-					'callback'            => array( $this, 'get_listing_statuses' ),
-					'permission_callback' => array( $this, 'check_admin_permission' ),
-				),
-			)
-		);
-
-		// Bulk sync endpoint.
-		register_rest_route(
-			$this->namespace,
-			'/bulk-sync',
-			array(
-				array(
-					'methods'             => 'POST',
-					'callback'            => array( $this, 'handle_bulk_sync' ),
-					'permission_callback' => array( $this, 'check_admin_permission' ),
-					'args'                => array(
-						'post_ids' => array(
-							'type'     => 'array',
-							'required' => false,
-							'default'  => array(),
+					array(
+						'methods'             => 'POST',
+						'callback'            => array( $this, 'handle_chat' ),
+						'permission_callback' => array( $this, 'check_chat_permission' ),
+						'args'                => array(
+							'message'      => array(
+								'type'              => 'string',
+								'required'          => true,
+								'sanitize_callback' => 'sanitize_textarea_field',
+							),
+							'conversation' => array(
+								'type'     => 'array',
+								'required' => false,
+								'default'  => array(),
+							),
 						),
 					),
-				),
-			)
-		);
+				)
+			);
+
+			// Listings endpoint (admin-only).
+			register_rest_route(
+				$this->namespace,
+				'/listings',
+				array(
+					array(
+						'methods'             => 'GET',
+						'callback'            => array( $this, 'get_listings' ),
+						'permission_callback' => array( $this, 'check_admin_permission' ),
+					),
+				)
+			);
+
+			// Directory types endpoint.
+			register_rest_route(
+				$this->namespace,
+				'/directory-types',
+				array(
+					array(
+						'methods'             => 'GET',
+						'callback'            => array( $this, 'get_directory_types' ),
+						'permission_callback' => array( $this, 'check_admin_permission' ),
+					),
+				)
+			);
+
+			// Listing statuses endpoint.
+			register_rest_route(
+				$this->namespace,
+				'/listing-statuses',
+				array(
+					array(
+						'methods'             => 'GET',
+						'callback'            => array( $this, 'get_listing_statuses' ),
+						'permission_callback' => array( $this, 'check_admin_permission' ),
+					),
+				)
+			);
+
+			// Bulk sync endpoint.
+			register_rest_route(
+				$this->namespace,
+				'/bulk-sync',
+				array(
+					array(
+						'methods'             => 'POST',
+						'callback'            => array( $this, 'handle_bulk_sync' ),
+						'permission_callback' => array( $this, 'check_admin_permission' ),
+						'args'                => array(
+							'post_ids' => array(
+								'type'     => 'array',
+								'required' => false,
+								'default'  => array(),
+							),
+						),
+					),
+				)
+			);
+		}
 	}
 
 	/**
@@ -179,7 +188,7 @@ class REST_Controller {
 		if ( ! $this->check_rate_limit() ) {
 			return new \WP_Error(
 				'rate_limited',
-				__( 'Too many requests. Please try again later.', 'directorist-smart-assistant' ),
+				__( 'Too many requests. Please try again later.', 'directorist-ai-agents' ),
 				array( 'status' => 429 )
 			);
 		}
@@ -193,13 +202,13 @@ class REST_Controller {
 	 */
 	private function check_rate_limit(): bool {
 		$ip  = $this->get_client_ip();
-		$key = 'dsa_rate_' . md5( $ip );
+		$key = 'daia_rate_' . md5( $ip );
 
 		/** Filter the maximum chat requests per window (default 20). */
-		$max_requests = apply_filters( 'dsa_rate_limit_requests', 20 );
+		$max_requests = apply_filters( 'daia_rate_limit_requests', 20 );
 
 		/** Filter the rate-limit window in seconds (default 60). */
-		$window = apply_filters( 'dsa_rate_limit_window', MINUTE_IN_SECONDS );
+		$window = apply_filters( 'daia_rate_limit_window', MINUTE_IN_SECONDS );
 
 		$data = get_transient( $key );
 
@@ -351,7 +360,7 @@ class REST_Controller {
 		return new \WP_REST_Response(
 			array(
 				'success' => true,
-				'message' => __( 'Settings saved successfully.', 'directorist-smart-assistant' ),
+				'message' => __( 'Settings saved successfully.', 'directorist-ai-agents' ),
 			),
 			200
 		);
@@ -372,7 +381,7 @@ class REST_Controller {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
-					'message' => __( 'Message is required.', 'directorist-smart-assistant' ),
+					'message' => __( 'Message is required.', 'directorist-ai-agents' ),
 				),
 				400
 			);
@@ -468,12 +477,12 @@ class REST_Controller {
 	public function get_listing_statuses( \WP_REST_Request $request ): \WP_REST_Response {
 		$statuses = get_post_statuses();
 
-		$statuses['expired'] = __( 'Expired', 'directorist-smart-assistant' );
-		$statuses['pending'] = __( 'Pending', 'directorist-smart-assistant' );
-		$statuses['draft']   = __( 'Draft', 'directorist-smart-assistant' );
-		$statuses['publish'] = __( 'Published', 'directorist-smart-assistant' );
-		$statuses['private'] = __( 'Private', 'directorist-smart-assistant' );
-		$statuses['future']  = __( 'Scheduled', 'directorist-smart-assistant' );
+		$statuses['expired'] = __( 'Expired', 'directorist-ai-agents' );
+		$statuses['pending'] = __( 'Pending', 'directorist-ai-agents' );
+		$statuses['draft']   = __( 'Draft', 'directorist-ai-agents' );
+		$statuses['publish'] = __( 'Published', 'directorist-ai-agents' );
+		$statuses['private'] = __( 'Private', 'directorist-ai-agents' );
+		$statuses['future']  = __( 'Scheduled', 'directorist-ai-agents' );
 
 		$listing_statuses = array();
 		foreach ( $statuses as $key => $label ) {
@@ -502,7 +511,7 @@ class REST_Controller {
 			return new \WP_REST_Response(
 				array(
 					'success' => false,
-					'message' => $results['errors'][0] ?? __( 'No listings found to sync.', 'directorist-smart-assistant' ),
+					'message' => $results['errors'][0] ?? __( 'No listings found to sync.', 'directorist-ai-agents' ),
 					'results' => $results,
 				),
 				400
@@ -511,7 +520,7 @@ class REST_Controller {
 
 		$message = sprintf(
 			/* translators: %1$d: Success count, %2$d: Failed count, %3$d: Total count */
-			__( 'Synced %1$d out of %3$d listings successfully. %2$d failed.', 'directorist-smart-assistant' ),
+			__( 'Synced %1$d out of %3$d listings successfully. %2$d failed.', 'directorist-ai-agents' ),
 			$results['success'],
 			$results['failed'],
 			$results['total']

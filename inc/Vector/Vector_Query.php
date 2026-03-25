@@ -2,13 +2,13 @@
 /**
  * Vector Query Handler
  *
- * @package DirectoristSmartAssistant
+ * @package DirectoristAIAgents
  */
 
-namespace DirectoristSmartAssistant\Vector;
+namespace DirectoristAIAgents\Vector;
 
-use DirectoristSmartAssistant\Service\Vector_API_Client;
-use DirectoristSmartAssistant\Helpers\Listing_Helper;
+use DirectoristAIAgents\Service\Vector_API_Client;
+use DirectoristAIAgents\Helpers\Listing_Helper;
 
 /**
  * Vector Query class
@@ -53,7 +53,7 @@ class Vector_Query {
 		if ( ! $client ) {
 			return new \WP_Error(
 				'missing_credentials',
-				__( 'Vector storage API credentials are not configured.', 'directorist-smart-assistant' )
+				__( 'Vector storage API credentials are not configured.', 'directorist-ai-agents' )
 			);
 		}
 

@@ -52,6 +52,9 @@ class Enqueuer {
 
 		$asset_file = include $asset_path;
 
+		// Powers the custom launcher icon picker.
+		wp_enqueue_media();
+
 		wp_enqueue_script(
 			'directorist-smart-assistant-admin',
 			DIRECTORIST_SMART_ASSISTANT_PLUGIN_URL . 'assets/build/admin.js',

@@ -5,6 +5,7 @@ module.exports = {
 	entry: {
 		'admin': './assets/src/admin/index.js',
 		'chat-widget': './assets/src/chat-widget/index.js',
+		'symptom-search': './assets/src/symptom-search/index.js',
 	},
 	output: {
 		...defaultConfig.output,

@@ -116,6 +116,9 @@ final class Directorist_Smart_Assistant {
 
 		// Load Vector Sync
 		DirectoristSmartAssistant\Vector\Vector_Sync::get_instance();
+
+		// Load Shortcodes
+		DirectoristSmartAssistant\Shortcodes\Symptom_Search::get_instance();
 	}
 }
 

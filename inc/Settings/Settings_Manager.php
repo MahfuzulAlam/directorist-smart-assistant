@@ -74,6 +74,8 @@ class Settings_Manager {
 			'chat_agent_name'        => '',
 			'chat_widget_position'   => 'bottom-right',
 			'chat_widget_color'      => '#667eea',
+			'chat_widget_icon'       => 'chat',
+			'chat_widget_icon_url'   => '',
 		);
 
 		$settings = get_option( $this->option_name, array() );
@@ -121,6 +123,17 @@ class Settings_Manager {
 			$settings['vector_api_secret_key'] = $current_settings['vector_api_secret_key'] ?? '';
 		}
 
+		// Launcher icon: a known preset key, or a custom image URL that wins over it.
+		if ( isset( $settings['chat_widget_icon'] ) ) {
+			$settings['chat_widget_icon'] = in_array( $settings['chat_widget_icon'], $this->get_widget_icon_keys(), true )
+				? $settings['chat_widget_icon']
+				: 'chat';
+		}
+
+		if ( isset( $settings['chat_widget_icon_url'] ) ) {
+			$settings['chat_widget_icon_url'] = esc_url_raw( trim( (string) $settings['chat_widget_icon_url'] ) );
+		}
+
 		// Merge with existing settings to preserve all fields
 		$settings = wp_parse_args( $settings, $current_settings );
 
@@ -137,6 +150,17 @@ class Settings_Manager {
 	public function get_setting( string $key, $default = '' ) {
 		$settings = $this->get_settings();
 		return isset( $settings[ $key ] ) ? $settings[ $key ] : $default;
+	}
+
+	/**
+	 * Launcher icon keys the widget knows how to draw.
+	 *
+	 * Kept in step with assets/src/shared/widget-icons.js.
+	 *
+	 * @return string[]
+	 */
+	public function get_widget_icon_keys(): array {
+		return array( 'chat', 'messages', 'support', 'sparkle', 'tooth', 'stethoscope', 'help', 'bot' );
 	}
 
 	/**

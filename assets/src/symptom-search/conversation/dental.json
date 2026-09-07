@@ -1,0 +1,620 @@
+{
+  "version": "1.0.0",
+  "name": "dental_symptom_triage_flow",
+  "description": "Adaptive question graph for dental symptom triage. Walk this graph in code; use the LLM for interpretation and phrasing, not for routing red flags.",
+  "config": {
+    "max_questions_per_session": 8,
+    "max_questions_after_urgency_known": 2,
+    "locale_default": "en",
+    "locales_supported": ["en", "bn"],
+    "stop_rule": "Emit assessment as soon as urgency tier is determinable. Precision of diagnosis is secondary to correct urgency tier."
+  },
+
+  "urgency_tiers": [
+    { "id": "emergency",  "label": "Emergency",        "action": "Route to emergency care now. Do not offer normal booking.", "queue_score": 100 },
+    { "id": "urgent_24h", "label": "Urgent (24h)",     "action": "Offer same-day or next-morning slot. Bypass normal queue.",  "queue_score": 80 },
+    { "id": "soon_1week", "label": "Soon (within 1 week)", "action": "Offer earliest slot within 7 days.",                     "queue_score": 50 },
+    { "id": "routine",    "label": "Routine",          "action": "Normal booking calendar.",                                   "queue_score": 20 }
+  ],
+
+  "red_flags": {
+    "_comment": "LAYER 0. Evaluate in code BEFORE any LLM call. Any true value hard-routes to emergency regardless of model output. Present as one multi-select checklist, not sequential questions.",
+    "node_id": "rf_gate",
+    "type": "multi_select",
+    "prompt": {
+      "en": "Before we start — are any of these happening right now?",
+      "bn": "শুরু করার আগে — এর মধ্যে কোনোটি কি এখন ঘটছে?"
+    },
+    "allow_none": true,
+    "none_option": {
+      "value": "none",
+      "label": { "en": "None of these", "bn": "এর কোনোটিই নয়" },
+      "next": "cc_chief_complaint"
+    },
+    "options": [
+      { "value": "rf_airway",   "label": { "en": "Difficulty breathing or swallowing", "bn": "শ্বাস নিতে বা গিলতে কষ্ট" }, "urgency": "emergency", "reason": "Possible airway compromise from spreading infection." },
+      { "value": "rf_spread",   "label": { "en": "Swelling spreading to eye, neck, or under the tongue", "bn": "চোখ, ঘাড় বা জিহ্বার নিচে ছড়ানো ফোলা" }, "urgency": "emergency", "reason": "Possible deep space infection (Ludwig's angina risk)." },
+      { "value": "rf_fever",    "label": { "en": "Fever along with facial swelling", "bn": "মুখ ফোলার সাথে জ্বর" }, "urgency": "emergency", "reason": "Systemic involvement of dental infection." },
+      { "value": "rf_bleed",    "label": { "en": "Bleeding that will not stop after 20 minutes of pressure", "bn": "২০ মিনিট চাপ দেওয়ার পরেও রক্তপাত বন্ধ হচ্ছে না" }, "urgency": "emergency", "reason": "Uncontrolled haemorrhage." },
+      { "value": "rf_avulsion", "label": { "en": "A permanent tooth was knocked completely out", "bn": "স্থায়ী দাঁত সম্পূর্ণ খুলে পড়ে গেছে" }, "urgency": "emergency", "reason": "Avulsed tooth — replantation window is under 60 minutes." },
+      { "value": "rf_jaw",      "label": { "en": "Jaw injury, or jaw will not close properly", "bn": "চোয়ালে আঘাত, বা চোয়াল ঠিকমতো বন্ধ হচ্ছে না" }, "urgency": "emergency", "reason": "Possible mandibular fracture or dislocation." }
+    ],
+    "on_any_true": {
+      "halt_flow": true,
+      "urgency": "emergency",
+      "queue_score": 100,
+      "show": "emergency_screen",
+      "emit_immediate_guidance": true
+    }
+  },
+
+  "nodes": {
+
+    "cc_chief_complaint": {
+      "layer": 1,
+      "type": "single_select",
+      "required": true,
+      "summary_label": { "en": "Main problem", "bn": "মূল সমস্যা" },
+      "prompt": {
+        "en": "What's bothering you most right now?",
+        "bn": "এই মুহূর্তে আপনাকে সবচেয়ে বেশি কষ্ট দিচ্ছে কোনটি?"
+      },
+      "options": [
+        { "value": "pain",        "label": { "en": "Tooth or jaw pain", "bn": "দাঁত বা চোয়ালে ব্যথা" }, "next": "u_location" },
+        { "value": "swelling",    "label": { "en": "Swelling", "bn": "ফোলা" }, "next": "u_location" },
+        { "value": "gum_bleed",   "label": { "en": "Bleeding or sore gums", "bn": "মাড়ি থেকে রক্ত বা ব্যথা" }, "next": "u_location" },
+        { "value": "broken",      "label": { "en": "Broken tooth, chip, or lost filling", "bn": "দাঁত ভাঙা, চিড় বা ফিলিং পড়ে গেছে" }, "next": "u_location" },
+        { "value": "sensitivity", "label": { "en": "Sensitivity to hot / cold / sweet", "bn": "গরম / ঠান্ডা / মিষ্টিতে শিরশির" }, "next": "u_location" },
+        { "value": "lesion",      "label": { "en": "Mouth sore, ulcer, patch, or bad breath", "bn": "মুখে ঘা, আলসার, দাগ বা দুর্গন্ধ" }, "next": "u_duration" },
+        { "value": "appliance",   "label": { "en": "Problem with braces, denture, crown, or implant", "bn": "ব্রেসেস, নকল দাঁত, ক্রাউন বা ইমপ্লান্টে সমস্যা" }, "next": "u_location" },
+        { "value": "routine",     "label": { "en": "Checkup, cleaning, or cosmetic", "bn": "চেকআপ, পরিষ্কার বা কসমেটিক" }, "next": "ctx_age", "set_urgency": "routine" }
+      ]
+    },
+
+    "u_location": {
+      "layer": 2,
+      "type": "body_map",
+      "required": true,
+      "summary_label": { "en": "Where", "bn": "কোথায়" },
+      "prompt": {
+        "en": "Where is it? Tap the area — or pick below.",
+        "bn": "কোথায় সমস্যা? জায়গাটি ট্যাপ করুন — অথবা নিচে থেকে বেছে নিন।"
+      },
+      "fallback_type": "single_select",
+      "options": [
+        { "value": "upper_right_back",  "label": { "en": "Upper right, back", "bn": "উপরে ডানে, পিছনে" } },
+        { "value": "upper_right_front", "label": { "en": "Upper right, front", "bn": "উপরে ডানে, সামনে" } },
+        { "value": "upper_left_front",  "label": { "en": "Upper left, front", "bn": "উপরে বামে, সামনে" } },
+        { "value": "upper_left_back",   "label": { "en": "Upper left, back", "bn": "উপরে বামে, পিছনে" } },
+        { "value": "lower_right_back",  "label": { "en": "Lower right, back", "bn": "নিচে ডানে, পিছনে" } },
+        { "value": "lower_right_front", "label": { "en": "Lower right, front", "bn": "নিচে ডানে, সামনে" } },
+        { "value": "lower_left_front",  "label": { "en": "Lower left, front", "bn": "নিচে বামে, সামনে" } },
+        { "value": "lower_left_back",   "label": { "en": "Lower left, back", "bn": "নিচে বামে, পিছনে" } },
+        { "value": "whole_mouth",       "label": { "en": "All over / can't tell", "bn": "পুরো মুখে / বলতে পারছি না" } },
+        { "value": "jaw_joint",         "label": { "en": "Jaw joint (near the ear)", "bn": "চোয়ালের জয়েন্ট (কানের কাছে)" } }
+      ],
+      "next": "u_duration"
+    },
+
+    "u_duration": {
+      "layer": 2,
+      "type": "single_select",
+      "required": true,
+      "summary_label": { "en": "How long", "bn": "কতদিন ধরে" },
+      "prompt": {
+        "en": "How long has this been going on?",
+        "bn": "কতদিন ধরে এই সমস্যা?"
+      },
+      "options": [
+        { "value": "today",     "label": { "en": "Started today", "bn": "আজ শুরু হয়েছে" }, "score": 15 },
+        { "value": "days",      "label": { "en": "A few days", "bn": "কয়েক দিন" }, "score": 10 },
+        { "value": "weeks",     "label": { "en": "A few weeks", "bn": "কয়েক সপ্তাহ" }, "score": 5 },
+        { "value": "months",    "label": { "en": "Months or longer", "bn": "কয়েক মাস বা তার বেশি" }, "score": 3, "flag": "chronic" }
+      ],
+      "next": "branch_router"
+    },
+
+    "branch_router": {
+      "layer": 2,
+      "type": "router",
+      "_comment": "Not shown to user. Routes on the value of cc_chief_complaint.",
+      "routes": {
+        "pain":        "p_character",
+        "swelling":    "s_pus",
+        "gum_bleed":   "g_spontaneous",
+        "broken":      "b_cause",
+        "sensitivity": "p_trigger",
+        "lesion":      "l_appearance",
+        "appliance":   "a_type"
+      },
+      "default": "u_severity"
+    },
+
+    "u_severity": {
+      "layer": 2,
+      "type": "scale",
+      "min": 1,
+      "max": 10,
+      "required": true,
+      "summary_label": { "en": "Pain level", "bn": "ব্যথার মাত্রা" },
+      "prompt": {
+        "en": "How bad is it right now, from 1 (barely notice it) to 10 (worst pain imaginable)?",
+        "bn": "এখন কতটা খারাপ, ১ (প্রায় বুঝতেই পারছি না) থেকে ১০ (কল্পনাতীত ব্যথা) পর্যন্ত?"
+      },
+      "scoring": [
+        { "range": [1, 3],  "score": 5 },
+        { "range": [4, 6],  "score": 20 },
+        { "range": [7, 8],  "score": 40 },
+        { "range": [9, 10], "score": 60, "min_urgency": "urgent_24h" }
+      ],
+      "next": "ctx_age"
+    },
+
+    "p_character": {
+      "layer": 3,
+      "branch": "pain",
+      "type": "single_select",
+      "summary_label": { "en": "Pain feels", "bn": "ব্যথার ধরন" },
+      "prompt": {
+        "en": "What does the pain feel like?",
+        "bn": "ব্যথাটা কেমন অনুভব হয়?"
+      },
+      "options": [
+        { "value": "sharp",     "label": { "en": "Sharp, shooting", "bn": "তীক্ষ্ণ, ঝিলিক দেওয়া" }, "score": 15 },
+        { "value": "throbbing", "label": { "en": "Throbbing, pulsing", "bn": "দপদপ করা" }, "score": 30, "hint": "Throbbing suggests pulpal or periapical involvement." },
+        { "value": "dull",      "label": { "en": "Dull, constant ache", "bn": "ভোঁতা, একটানা ব্যথা" }, "score": 15 },
+        { "value": "pressure",  "label": { "en": "Pressure or fullness", "bn": "চাপ বা ভারী লাগা" }, "score": 20 }
+      ],
+      "next": "p_trigger"
+    },
+
+    "p_trigger": {
+      "layer": 3,
+      "branch": "pain",
+      "type": "multi_select",
+      "summary_label": { "en": "Set off by", "bn": "যাতে শুরু হয়" },
+      "prompt": {
+        "en": "What sets it off?",
+        "bn": "কীসে ব্যথা শুরু হয়?"
+      },
+      "options": [
+        { "value": "cold",    "label": { "en": "Cold food or drink", "bn": "ঠান্ডা খাবার বা পানীয়" }, "score": 10 },
+        { "value": "hot",     "label": { "en": "Hot food or drink", "bn": "গরম খাবার বা পানীয়" }, "score": 25, "hint": "Heat-provoked pain is a strong irreversible-pulpitis signal." },
+        { "value": "sweet",   "label": { "en": "Sweet things", "bn": "মিষ্টি জিনিস" }, "score": 10 },
+        { "value": "biting",  "label": { "en": "Biting or chewing", "bn": "কামড়ালে বা চিবালে" }, "score": 25, "hint": "Pain on bite suggests cracked tooth or apical periodontitis." },
+        { "value": "touch",   "label": { "en": "Touching it", "bn": "ছুঁলে" }, "score": 20 },
+        { "value": "nothing", "label": { "en": "Nothing — it hurts on its own", "bn": "কিছুতেই না — নিজে নিজেই ব্যথা করে" }, "score": 40, "hint": "Spontaneous pain is a key irreversible-pulpitis marker.", "min_urgency": "urgent_24h" }
+      ],
+      "next": "p_lingering"
+    },
+
+    "p_lingering": {
+      "layer": 3,
+      "branch": "pain",
+      "type": "single_select",
+      "_comment": "HIGHEST-SIGNAL QUESTION. Lingering pain separates reversible sensitivity from irreversible pulpitis.",
+      "summary_label": { "en": "Pain lasts", "bn": "ব্যথা থাকে" },
+      "prompt": {
+        "en": "After the trigger goes away, what happens to the pain?",
+        "bn": "যেটাতে ব্যথা শুরু হয় সেটা সরে গেলে ব্যথার কী হয়?"
+      },
+      "options": [
+        { "value": "stops_fast",  "label": { "en": "Stops within a few seconds", "bn": "কয়েক সেকেন্ডেই থেমে যায়" }, "score": 5,  "hint": "Suggests reversible pulpitis / dentine sensitivity." },
+        { "value": "lingers",     "label": { "en": "Keeps hurting for a minute or more", "bn": "এক মিনিট বা তার বেশি ব্যথা থাকে" }, "score": 45, "hint": "Suggests irreversible pulpitis — likely needs endodontic care.", "min_urgency": "urgent_24h", "specialty": "endodontist" },
+        { "value": "never_stops", "label": { "en": "It never really stops", "bn": "আসলে কখনো থামেই না" }, "score": 50, "min_urgency": "urgent_24h", "specialty": "endodontist" }
+      ],
+      "next": "p_night"
+    },
+
+    "p_night": {
+      "layer": 3,
+      "branch": "pain",
+      "type": "single_select",
+      "summary_label": { "en": "At night", "bn": "রাতে" },
+      "prompt": {
+        "en": "Does it wake you at night, or get worse when you lie down?",
+        "bn": "রাতে কি ঘুম ভেঙে যায়, বা শুয়ে পড়লে বাড়ে?"
+      },
+      "options": [
+        { "value": "yes",       "label": { "en": "Yes", "bn": "হ্যাঁ" }, "score": 35, "min_urgency": "urgent_24h", "hint": "Nocturnal / postural pain indicates pulpal inflammation." },
+        { "value": "no",        "label": { "en": "No", "bn": "না" }, "score": 0 },
+        { "value": "sometimes", "label": { "en": "Sometimes", "bn": "মাঝে মাঝে" }, "score": 15 }
+      ],
+      "next": "p_localised"
+    },
+
+    "p_localised": {
+      "layer": 3,
+      "branch": "pain",
+      "type": "single_select",
+      "summary_label": { "en": "Spread", "bn": "ছড়ানো" },
+      "prompt": {
+        "en": "Can you point to one exact tooth, or is it spread across an area?",
+        "bn": "একটি নির্দিষ্ট দাঁত দেখাতে পারেন, নাকি পুরো একটা জায়গা জুড়ে?"
+      },
+      "options": [
+        { "value": "one_tooth", "label": { "en": "One specific tooth", "bn": "একটি নির্দিষ্ট দাঁত" }, "score": 20, "hint": "Localised pain suggests periapical involvement — easier to identify." },
+        { "value": "area",      "label": { "en": "A general area", "bn": "একটা সাধারণ জায়গা" }, "score": 10 },
+        { "value": "radiating", "label": { "en": "It spreads to my ear, temple, or neck", "bn": "কান, কপাল বা ঘাড়ে ছড়িয়ে যায়" }, "score": 30, "hint": "Referred pain — check for TMD or spreading infection." }
+      ],
+      "next": "u_severity"
+    },
+
+    "s_pus": {
+      "layer": 3,
+      "branch": "swelling",
+      "type": "single_select",
+      "summary_label": { "en": "Pus or bump", "bn": "পুঁজ বা ফোসকা" },
+      "prompt": {
+        "en": "Is there any pus, a bad taste, or a small bump on the gum?",
+        "bn": "পুঁজ, বাজে স্বাদ, বা মাড়িতে ছোট ফোসকা আছে কি?"
+      },
+      "options": [
+        { "value": "pus",       "label": { "en": "Yes, pus or bad taste", "bn": "হ্যাঁ, পুঁজ বা বাজে স্বাদ" }, "score": 45, "min_urgency": "urgent_24h", "specialty": "oral_surgeon", "hint": "Draining abscess." },
+        { "value": "bump",      "label": { "en": "A bump, but no pus", "bn": "ফোসকা আছে, পুঁজ নেই" }, "score": 35, "min_urgency": "urgent_24h" },
+        { "value": "no",        "label": { "en": "No", "bn": "না" }, "score": 20 }
+      ],
+      "next": "s_progression"
+    },
+
+    "s_progression": {
+      "layer": 3,
+      "branch": "swelling",
+      "type": "single_select",
+      "summary_label": { "en": "Swelling", "bn": "ফোলা" },
+      "prompt": {
+        "en": "Is the swelling growing, staying the same, or going down?",
+        "bn": "ফোলা কি বাড়ছে, একই আছে, নাকি কমছে?"
+      },
+      "options": [
+        { "value": "growing", "label": { "en": "Growing", "bn": "বাড়ছে" }, "score": 45, "min_urgency": "urgent_24h" },
+        { "value": "same",    "label": { "en": "About the same", "bn": "প্রায় একই" }, "score": 25 },
+        { "value": "shrinking", "label": { "en": "Going down", "bn": "কমছে" }, "score": 10 }
+      ],
+      "next": "u_severity"
+    },
+
+    "g_spontaneous": {
+      "layer": 3,
+      "branch": "gum_bleed",
+      "type": "single_select",
+      "summary_label": { "en": "Bleeds when", "bn": "রক্ত পড়ে যখন" },
+      "prompt": {
+        "en": "When do the gums bleed?",
+        "bn": "মাড়ি থেকে কখন রক্ত পড়ে?"
+      },
+      "options": [
+        { "value": "brushing",    "label": { "en": "Only when brushing or flossing", "bn": "শুধু ব্রাশ বা ফ্লস করার সময়" }, "score": 10, "specialty": "general" },
+        { "value": "eating",      "label": { "en": "When eating hard food", "bn": "শক্ত খাবার খাওয়ার সময়" }, "score": 15 },
+        { "value": "spontaneous", "label": { "en": "On its own, without touching", "bn": "নিজে নিজেই, না ছুঁলেও" }, "score": 35, "min_urgency": "soon_1week", "specialty": "periodontist" }
+      ],
+      "next": "g_mobility"
+    },
+
+    "g_mobility": {
+      "layer": 3,
+      "branch": "gum_bleed",
+      "type": "multi_select",
+      "summary_label": { "en": "Also noticed", "bn": "সাথে আরও" },
+      "prompt": {
+        "en": "Any of these as well?",
+        "bn": "এর সাথে এগুলোর কোনোটি আছে?"
+      },
+      "allow_none": true,
+      "options": [
+        { "value": "loose",     "label": { "en": "Teeth feel loose", "bn": "দাঁত নড়ছে মনে হয়" }, "score": 40, "min_urgency": "soon_1week", "specialty": "periodontist" },
+        { "value": "receding",  "label": { "en": "Gums pulling back from teeth", "bn": "মাড়ি দাঁত থেকে সরে যাচ্ছে" }, "score": 25, "specialty": "periodontist" },
+        { "value": "bad_smell", "label": { "en": "Persistent bad smell", "bn": "একটানা দুর্গন্ধ" }, "score": 20 },
+        { "value": "gaps",      "label": { "en": "New gaps between teeth", "bn": "দাঁতের মাঝে নতুন ফাঁক" }, "score": 25 }
+      ],
+      "next": "u_severity"
+    },
+
+    "b_cause": {
+      "layer": 3,
+      "branch": "broken",
+      "type": "single_select",
+      "summary_label": { "en": "How it broke", "bn": "যেভাবে ভাঙল" },
+      "prompt": {
+        "en": "How did it break?",
+        "bn": "কীভাবে ভাঙল?"
+      },
+      "options": [
+        { "value": "trauma",   "label": { "en": "An injury or accident", "bn": "আঘাত বা দুর্ঘটনা" }, "score": 35, "min_urgency": "urgent_24h", "specialty": "oral_surgeon" },
+        { "value": "biting",   "label": { "en": "Biting something hard", "bn": "শক্ত কিছু কামড়ে" }, "score": 20 },
+        { "value": "gradual",  "label": { "en": "It just came away on its own", "bn": "নিজে নিজেই খুলে গেছে" }, "score": 15 }
+      ],
+      "next": "b_symptoms"
+    },
+
+    "b_symptoms": {
+      "layer": 3,
+      "branch": "broken",
+      "type": "multi_select",
+      "summary_label": { "en": "Tooth now", "bn": "দাঁতের অবস্থা" },
+      "prompt": {
+        "en": "What's happening with the broken tooth?",
+        "bn": "ভাঙা দাঁতটির কী অবস্থা?"
+      },
+      "allow_none": true,
+      "options": [
+        { "value": "painful",   "label": { "en": "It hurts", "bn": "ব্যথা করছে" }, "score": 30 },
+        { "value": "sharp_edge","label": { "en": "Sharp edge cutting my tongue or cheek", "bn": "ধারালো কিনারা জিহ্বা বা গালে লাগছে" }, "score": 25, "min_urgency": "soon_1week" },
+        { "value": "nerve",     "label": { "en": "I can see something pink or red inside it", "bn": "ভেতরে গোলাপি বা লাল কিছু দেখা যাচ্ছে" }, "score": 45, "min_urgency": "urgent_24h", "specialty": "endodontist", "hint": "Possible pulp exposure." },
+        { "value": "no_pain",   "label": { "en": "No pain at all", "bn": "কোনো ব্যথা নেই" }, "score": 5 }
+      ],
+      "next": "u_severity"
+    },
+
+    "l_appearance": {
+      "layer": 3,
+      "branch": "lesion",
+      "type": "single_select",
+      "summary_label": { "en": "Looks like", "bn": "দেখতে" },
+      "prompt": {
+        "en": "What does it look like?",
+        "bn": "দেখতে কেমন?"
+      },
+      "options": [
+        { "value": "ulcer",       "label": { "en": "An open sore or ulcer", "bn": "খোলা ঘা বা আলসার" }, "score": 15 },
+        { "value": "white_patch", "label": { "en": "A white or red patch that won't rub off", "bn": "সাদা বা লাল দাগ, ঘষলে যায় না" }, "score": 40, "min_urgency": "soon_1week", "specialty": "oral_surgeon", "hint": "Persistent patch — needs clinical examination." },
+        { "value": "lump",        "label": { "en": "A lump or growth", "bn": "গোটা বা মাংসপিণ্ড" }, "score": 40, "min_urgency": "soon_1week", "specialty": "oral_surgeon" },
+        { "value": "smell_only",  "label": { "en": "Nothing visible — just bad breath or taste", "bn": "দেখা যায় না — শুধু দুর্গন্ধ বা বাজে স্বাদ" }, "score": 10 }
+      ],
+      "next": "l_persistence"
+    },
+
+    "l_persistence": {
+      "layer": 3,
+      "branch": "lesion",
+      "type": "single_select",
+      "_comment": "The 2-week rule is the key referral threshold for oral lesions.",
+      "summary_label": { "en": "Healing", "bn": "সারছে কিনা" },
+      "prompt": {
+        "en": "Has it been there more than two weeks without healing?",
+        "bn": "দুই সপ্তাহের বেশি সময় ধরে আছে এবং সারছে না?"
+      },
+      "options": [
+        { "value": "yes",       "label": { "en": "Yes, more than two weeks", "bn": "হ্যাঁ, দুই সপ্তাহের বেশি" }, "score": 45, "min_urgency": "soon_1week", "specialty": "oral_surgeon", "hint": "Non-healing lesion beyond 2 weeks warrants examination." },
+        { "value": "no",        "label": { "en": "No, less than two weeks", "bn": "না, দুই সপ্তাহের কম" }, "score": 10 },
+        { "value": "recurring", "label": { "en": "It heals but keeps coming back", "bn": "সেরে যায় কিন্তু আবার হয়" }, "score": 20 }
+      ],
+      "next": "ctx_habits"
+    },
+
+    "a_type": {
+      "layer": 3,
+      "branch": "appliance",
+      "type": "single_select",
+      "summary_label": { "en": "Appliance", "bn": "যে যন্ত্রে" },
+      "prompt": {
+        "en": "Which one is giving you trouble?",
+        "bn": "কোনটিতে সমস্যা হচ্ছে?"
+      },
+      "options": [
+        { "value": "braces",  "label": { "en": "Braces or aligners", "bn": "ব্রেসেস বা অ্যালাইনার" }, "specialty": "orthodontist" },
+        { "value": "denture", "label": { "en": "Denture", "bn": "নকল দাঁত" }, "specialty": "prosthodontist" },
+        { "value": "crown",   "label": { "en": "Crown, bridge, or filling", "bn": "ক্রাউন, ব্রিজ বা ফিলিং" }, "specialty": "general" },
+        { "value": "implant", "label": { "en": "Implant", "bn": "ইমপ্লান্ট" }, "specialty": "oral_surgeon" }
+      ],
+      "next": "a_problem"
+    },
+
+    "a_problem": {
+      "layer": 3,
+      "branch": "appliance",
+      "type": "single_select",
+      "summary_label": { "en": "Problem", "bn": "সমস্যা" },
+      "prompt": {
+        "en": "What's wrong with it?",
+        "bn": "এতে কী সমস্যা হয়েছে?"
+      },
+      "options": [
+        { "value": "loose",    "label": { "en": "It's loose or came off", "bn": "ঢিলা হয়ে গেছে বা খুলে গেছে" }, "score": 25, "min_urgency": "soon_1week" },
+        { "value": "poking",   "label": { "en": "Something is poking or cutting me", "bn": "কিছু একটা খোঁচা দিচ্ছে বা কাটছে" }, "score": 30, "min_urgency": "soon_1week" },
+        { "value": "pain",     "label": { "en": "Pain around it", "bn": "এর আশেপাশে ব্যথা" }, "score": 30 },
+        { "value": "broken",   "label": { "en": "It's broken", "bn": "ভেঙে গেছে" }, "score": 25 }
+      ],
+      "next": "u_severity"
+    },
+
+    "ctx_age": {
+      "layer": 4,
+      "type": "number",
+      "required": true,
+      "summary_label": { "en": "Age", "bn": "বয়স" },
+      "prompt": { "en": "How old are you?", "bn": "আপনার বয়স কত?" },
+      "min": 0,
+      "max": 120,
+      "rules": [
+        { "if": "value < 13", "flag": "paediatric", "specialty": "pedodontist" },
+        { "if": "value > 65", "flag": "geriatric", "score": 5 }
+      ],
+      "next": "ctx_medical"
+    },
+
+    "ctx_medical": {
+      "layer": 4,
+      "type": "multi_select",
+      "allow_none": true,
+      "summary_label": { "en": "Health", "bn": "স্বাস্থ্য" },
+      "prompt": {
+        "en": "Do any of these apply to you?",
+        "bn": "এর মধ্যে কোনোটি আপনার ক্ষেত্রে প্রযোজ্য?"
+      },
+      "options": [
+        { "value": "diabetes",     "label": { "en": "Diabetes", "bn": "ডায়াবেটিস" }, "score": 20, "hint": "Raises infection risk and slows healing — escalate infection cases." },
+        { "value": "heart",        "label": { "en": "Heart condition or heart valve replacement", "bn": "হৃদরোগ বা হার্টের ভালভ প্রতিস্থাপন" }, "score": 20, "hint": "May need antibiotic prophylaxis — flag for dentist." },
+        { "value": "blood_thinner","label": { "en": "Taking blood thinners", "bn": "রক্ত পাতলা করার ওষুধ খাচ্ছি" }, "score": 20, "hint": "Bleeding risk for any extraction." },
+        { "value": "pregnant",     "label": { "en": "Pregnant", "bn": "গর্ভবতী" }, "score": 15, "hint": "Affects imaging and medication choice." },
+        { "value": "immune",       "label": { "en": "Weakened immune system", "bn": "রোগ প্রতিরোধ ক্ষমতা কম" }, "score": 25 },
+        { "value": "allergy",      "label": { "en": "Known drug allergy", "bn": "ওষুধে অ্যালার্জি আছে" }, "score": 5, "follow_up": "ctx_allergy_detail" }
+      ],
+      "next": "ctx_meds"
+    },
+
+    "ctx_allergy_detail": {
+      "layer": 4,
+      "type": "text",
+      "conditional_on": { "node": "ctx_medical", "contains": "allergy" },
+      "summary_label": { "en": "Allergy", "bn": "অ্যালার্জি" },
+      "prompt": { "en": "Which medicines are you allergic to?", "bn": "কোন ওষুধে আপনার অ্যালার্জি?" },
+      "max_length": 200,
+      "next": "ctx_meds"
+    },
+
+    "ctx_meds": {
+      "layer": 4,
+      "type": "single_select",
+      "summary_label": { "en": "Taking now", "bn": "এখন খাচ্ছেন" },
+      "prompt": {
+        "en": "Are you taking anything for this right now?",
+        "bn": "এর জন্য এখন কিছু খাচ্ছেন?"
+      },
+      "options": [
+        { "value": "painkiller_working",     "label": { "en": "Painkillers — they help", "bn": "ব্যথার ওষুধ — কাজ হচ্ছে" }, "score": 5 },
+        { "value": "painkiller_not_working", "label": { "en": "Painkillers — they aren't helping", "bn": "ব্যথার ওষুধ — কাজ হচ্ছে না" }, "score": 40, "min_urgency": "urgent_24h", "hint": "Analgesic-resistant pain is a strong urgency signal." },
+        { "value": "antibiotic",             "label": { "en": "Antibiotics", "bn": "অ্যান্টিবায়োটিক" }, "score": 25, "hint": "Already on antibiotics implies a prior infection diagnosis." },
+        { "value": "nothing",                "label": { "en": "Nothing", "bn": "কিছু না" }, "score": 0 }
+      ],
+      "next": "ctx_habits"
+    },
+
+    "ctx_habits": {
+      "layer": 4,
+      "type": "multi_select",
+      "allow_none": true,
+      "_comment": "Betel nut / zarda / gul are highly relevant in the Bangladesh market for oral lesion risk.",
+      "summary_label": { "en": "Habits", "bn": "অভ্যাস" },
+      "prompt": {
+        "en": "Do you use any of these?",
+        "bn": "এর মধ্যে কোনোটি ব্যবহার করেন?"
+      },
+      "options": [
+        { "value": "smoking",    "label": { "en": "Cigarettes or bidi", "bn": "সিগারেট বা বিড়ি" }, "score": 15 },
+        { "value": "betel",      "label": { "en": "Paan or betel nut (supari)", "bn": "পান বা সুপারি" }, "score": 20 },
+        { "value": "zarda_gul",  "label": { "en": "Zarda, gul, or sadapata", "bn": "জর্দা, গুল বা সাদাপাতা" }, "score": 25 },
+        { "value": "none",       "label": { "en": "None of these", "bn": "এর কোনোটিই না" }, "score": 0 }
+      ],
+      "next": "ctx_last_visit"
+    },
+
+    "ctx_last_visit": {
+      "layer": 4,
+      "type": "single_select",
+      "summary_label": { "en": "Last visit", "bn": "শেষ দেখানো" },
+      "prompt": {
+        "en": "When did you last see a dentist?",
+        "bn": "শেষ কবে দাঁতের ডাক্তার দেখিয়েছেন?"
+      },
+      "options": [
+        { "value": "under_6m",  "label": { "en": "Within 6 months", "bn": "৬ মাসের মধ্যে" } },
+        { "value": "1_2y",      "label": { "en": "1–2 years ago", "bn": "১–২ বছর আগে" } },
+        { "value": "over_2y",   "label": { "en": "More than 2 years ago", "bn": "২ বছরের বেশি আগে" }, "score": 5 },
+        { "value": "never",     "label": { "en": "Never", "bn": "কখনো না" }, "score": 5 }
+      ],
+      "next": "ctx_prior_work"
+    },
+
+    "ctx_prior_work": {
+      "layer": 4,
+      "type": "single_select",
+      "summary_label": { "en": "Past treatment", "bn": "আগের চিকিৎসা" },
+      "prompt": {
+        "en": "Has any dental work been done on that tooth before?",
+        "bn": "ওই দাঁতে আগে কোনো চিকিৎসা হয়েছে?"
+      },
+      "options": [
+        { "value": "root_canal", "label": { "en": "Root canal", "bn": "রুট ক্যানেল" }, "score": 25, "specialty": "endodontist", "hint": "Pain in a root-treated tooth suggests failed endodontics." },
+        { "value": "filling",    "label": { "en": "A filling", "bn": "ফিলিং" }, "score": 15 },
+        { "value": "crown",      "label": { "en": "Crown or bridge", "bn": "ক্রাউন বা ব্রিজ" }, "score": 15 },
+        { "value": "none",       "label": { "en": "No, nothing", "bn": "না, কিছু না" }, "score": 0 },
+        { "value": "unknown",    "label": { "en": "I don't remember", "bn": "মনে নেই" }, "score": 0 }
+      ],
+      "next": "book_availability"
+    },
+
+    "book_availability": {
+      "layer": 5,
+      "type": "single_select",
+      "_comment": "Routing only — does not affect clinical scoring.",
+      "summary_label": { "en": "Can come", "bn": "আসতে পারবেন" },
+      "prompt": {
+        "en": "How soon can you come in?",
+        "bn": "কত তাড়াতাড়ি আসতে পারবেন?"
+      },
+      "options": [
+        { "value": "today",     "label": { "en": "Today", "bn": "আজ" } },
+        { "value": "tomorrow",  "label": { "en": "Tomorrow", "bn": "আগামীকাল" } },
+        { "value": "this_week", "label": { "en": "This week", "bn": "এই সপ্তাহে" } },
+        { "value": "flexible",  "label": { "en": "I'm flexible", "bn": "যেকোনো সময়" } }
+      ],
+      "next": "book_location"
+    },
+
+    "book_location": {
+      "layer": 5,
+      "type": "location",
+      "summary_label": { "en": "Area", "bn": "এলাকা" },
+      "prompt": {
+        "en": "Which area works best for you?",
+        "bn": "কোন এলাকা আপনার জন্য সুবিধাজনক?"
+      },
+      "next": "assessment"
+    },
+
+    "assessment": {
+      "type": "terminal",
+      "action": "run_llm_assessment"
+    }
+  },
+
+  "scoring": {
+    "_comment": "queue_priority_score is the sum of triggered scores, clamped to 0-100, then floored by the highest min_urgency reached. The floor always wins over the sum.",
+    "method": "sum_then_clamp",
+    "clamp": [0, 100],
+    "urgency_floor_overrides_sum": true,
+    "thresholds": [
+      { "min": 85, "urgency": "emergency" },
+      { "min": 60, "urgency": "urgent_24h" },
+      { "min": 30, "urgency": "soon_1week" },
+      { "min": 0,  "urgency": "routine" }
+    ]
+  },
+
+  "specialties": [
+    { "id": "general",       "label": "General Dentist" },
+    { "id": "endodontist",   "label": "Endodontist (root canal)" },
+    { "id": "periodontist",  "label": "Periodontist (gums)" },
+    { "id": "oral_surgeon",  "label": "Oral & Maxillofacial Surgeon" },
+    { "id": "orthodontist",  "label": "Orthodontist (braces)" },
+    { "id": "prosthodontist","label": "Prosthodontist (dentures, crowns)" },
+    { "id": "pedodontist",   "label": "Pedodontist (children)" }
+  ],
+
+  "output_schema": {
+    "probable_conditions": [{ "name": "string", "confidence": "high|medium|low" }],
+    "urgency": "emergency|urgent_24h|soon_1week|routine",
+    "urgency_reason": "string",
+    "doctor_category": "string",
+    "recommended_specialty": "string (id from specialties)",
+    "queue_priority_score": "integer 0-100",
+    "red_flags_triggered": ["string"],
+    "self_care_until_visit": "string",
+    "questions_still_needed": ["string"],
+    "clinician_note": "string — concise summary for the dentist, not shown to patient",
+    "disclaimer_shown": "boolean"
+  },
+
+  "safety_rules": [
+    "Red flags are evaluated in code. Model output can raise urgency but can NEVER lower it below the code-determined floor.",
+    "Never present a condition as confirmed. Always phrase as possible and always pair with the need for dentist confirmation.",
+    "Never recommend a specific prescription medication, dose, or antibiotic.",
+    "Never advise the patient to delay care to save money.",
+    "If the model's confidence is low across all conditions, still emit an urgency tier — urgency drives the queue, diagnosis does not.",
+    "If a user describes symptoms outside dentistry (chest pain, facial droop, severe headache with vision change), stop and direct to general emergency care.",
+    "Log every session with the full answer set for clinical audit."
+  ],
+
+  "prompt_caching_note": "Everything in this file is static and belongs in the system prompt prefix, ahead of any conversation state. Approx 4,000+ tokens — comfortably clears OpenAI's 1,024-token cache floor and caches fully on Groq. Put only the answered-so-far state in the final user message."
+}

@@ -4,6 +4,11 @@
 import { createRoot,useState, useRef, useEffect } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 
+/**
+ * Internal dependencies
+ */
+import { renderWidgetIcon, DEFAULT_WIDGET_ICON } from '../shared/widget-icons';
+
 
 /**
  * Styles
@@ -193,7 +198,19 @@ function ChatWidget() {
 		position: 'bottom-right',
 		color: '#667eea',
 		agentName: '',
+		icon: DEFAULT_WIDGET_ICON,
+		iconUrl: '',
 	};
+
+	// A custom image wins over the preset glyph.
+	const iconKey = widgetSettings.icon || DEFAULT_WIDGET_ICON;
+	const iconUrl = widgetSettings.iconUrl || '';
+	const launcherIcon = iconUrl
+		? <img className="directorist-smart-assistant-chat-icon-img" src={iconUrl} alt="" />
+		: renderWidgetIcon(iconKey, 24);
+	const avatarIcon = iconUrl
+		? <img className="directorist-smart-assistant-chat-icon-img" src={iconUrl} alt="" />
+		: renderWidgetIcon(iconKey, 18);
 
 	// Get agent name or default
 	const agentName = widgetSettings.agentName || 'Smart Assistant';
@@ -274,23 +291,32 @@ function ChatWidget() {
 			{isOpen && (
 				<div className="directorist-smart-assistant-chat-window">
 					<div className="directorist-smart-assistant-chat-header">
-						<h3>{agentName}</h3>
+						<span className="directorist-smart-assistant-chat-avatar" aria-hidden="true">
+							{avatarIcon}
+						</span>
+						<div className="directorist-smart-assistant-chat-identity">
+							<h3>{agentName}</h3>
+							<p className="directorist-smart-assistant-chat-status">
+								<span className="directorist-smart-assistant-chat-status-dot" aria-hidden="true" />
+								{loading ? 'Typing…' : 'Online'}
+							</p>
+						</div>
 						<button
 							className="directorist-smart-assistant-chat-close"
 							onClick={() => setIsOpen(false)}
 							aria-label="Close chat"
 						>
 							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 16 16"
+								width="18"
+								height="18"
+								viewBox="0 0 24 24"
 								fill="none"
 								xmlns="http://www.w3.org/2000/svg"
 							>
 								<path
-									d="M12 4L4 12M4 4L12 12"
+									d="M17 7L7 17M7 7l10 10"
 									stroke="currentColor"
-									strokeWidth="2"
+									strokeWidth="1.9"
 									strokeLinecap="round"
 									strokeLinejoin="round"
 								/>
@@ -301,13 +327,24 @@ function ChatWidget() {
 					<div className="directorist-smart-assistant-chat-messages">
 						{messages.length === 0 && (
 							<div className="directorist-smart-assistant-chat-welcome">
-								<p>
-									{agentName && agentName !== 'Smart Assistant' 
-										? `Hello! I'm ${agentName}, your AI assistant. How can I help you today?`
-										: "Hello! I'm your AI assistant. How can I help you today?"
-									}
+								<span className="directorist-smart-assistant-chat-welcome-icon" aria-hidden="true">
+									{iconUrl
+										? <img className="directorist-smart-assistant-chat-icon-img" src={iconUrl} alt="" />
+										: renderWidgetIcon(iconKey, 26)}
+								</span>
+								<p className="directorist-smart-assistant-chat-welcome-title">
+									{agentName && agentName !== 'Smart Assistant'
+										? `Hi, I'm ${agentName}`
+										: 'Hi there'}
+								</p>
+								<p className="directorist-smart-assistant-chat-welcome-text">
+									Ask me anything about the listings on this site and I'll point you in the right direction.
 								</p>
 							</div>
+						)}
+
+						{messages.length > 0 && (
+							<div className="directorist-smart-assistant-chat-spacer" aria-hidden="true" />
 						)}
 
 						{messages.map((message, index) => (
@@ -315,6 +352,11 @@ function ChatWidget() {
 								key={index}
 								className={`directorist-smart-assistant-chat-message directorist-smart-assistant-chat-message--${message.role}`}
 							>
+								{message.role === 'assistant' && (
+									<span className="directorist-smart-assistant-chat-message-avatar" aria-hidden="true">
+										{avatarIcon}
+									</span>
+								)}
 								<div
 									className="directorist-smart-assistant-chat-message-content"
 									dangerouslySetInnerHTML={
@@ -330,6 +372,9 @@ function ChatWidget() {
 
 						{loading && (
 							<div className="directorist-smart-assistant-chat-message directorist-smart-assistant-chat-message--assistant">
+								<span className="directorist-smart-assistant-chat-message-avatar" aria-hidden="true">
+									{avatarIcon}
+								</span>
 								<div className="directorist-smart-assistant-chat-message-content">
 									<div className="directorist-smart-assistant-chat-loading">
 										<span></span>
@@ -387,22 +432,28 @@ function ChatWidget() {
 			)}
 
 			<button
-				className="directorist-smart-assistant-chat-button"
+				className={`directorist-smart-assistant-chat-button${isOpen ? ' is-open' : ''}`}
 				onClick={() => setIsOpen(!isOpen)}
-				aria-label="Open chat"
+				aria-label={isOpen ? 'Close chat' : 'Open chat'}
+				aria-expanded={isOpen}
 			>
-				<svg
-					width="24"
-					height="24"
-					viewBox="0 0 24 24"
-					fill="none"
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<path
-						d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z"
-						fill="currentColor"
-					/>
-				</svg>
+				{isOpen ? (
+					<svg
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<path
+							d="M17 7L7 17M7 7l10 10"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						/>
+					</svg>
+				) : launcherIcon}
 			</button>
 		</div>
 	);

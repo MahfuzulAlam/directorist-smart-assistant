@@ -1,0 +1,145 @@
+[
+  {
+    "id": "general-dentistry",
+    "label": "General Dentistry",
+    "sub": [
+      { "id": "family-dentistry", "label": "Family Dentistry" },
+      { "id": "preventive-dentistry", "label": "Preventive Dentistry" },
+      { "id": "restorative-dentistry", "label": "Restorative Dentistry" },
+      { "id": "cosmetic-dentistry", "label": "Cosmetic Dentistry" },
+      { "id": "emergency-dentistry", "label": "Emergency Dentistry" }
+    ]
+  },
+  {
+    "id": "endodontics",
+    "label": "Endodontics",
+    "sub": [
+      { "id": "root-canal-therapy", "label": "Root Canal Therapy" },
+      { "id": "endodontic-retreatment", "label": "Endodontic Retreatment" },
+      { "id": "apicoectomy", "label": "Apicoectomy / Endodontic Microsurgery" },
+      { "id": "regenerative-endodontics", "label": "Regenerative Endodontics" },
+      { "id": "dental-traumatology", "label": "Dental Traumatology" }
+    ]
+  },
+  {
+    "id": "periodontics",
+    "label": "Periodontics",
+    "sub": [
+      { "id": "non-surgical-periodontal", "label": "Non-Surgical Periodontal Therapy" },
+      { "id": "periodontal-surgery", "label": "Periodontal Surgery" },
+      { "id": "dental-implantology", "label": "Dental Implantology" },
+      { "id": "bone-soft-tissue-grafting", "label": "Bone & Soft Tissue Grafting" },
+      { "id": "periodontal-plastic-surgery", "label": "Periodontal Plastic Surgery" }
+    ]
+  },
+  {
+    "id": "prosthodontics",
+    "label": "Prosthodontics",
+    "sub": [
+      { "id": "fixed-prosthodontics", "label": "Fixed Prosthodontics (Crowns & Bridges)" },
+      { "id": "removable-prosthodontics", "label": "Removable Prosthodontics (Dentures)" },
+      { "id": "implant-prosthodontics", "label": "Implant Prosthodontics" },
+      { "id": "maxillofacial-prosthetics", "label": "Maxillofacial Prosthetics" },
+      { "id": "full-mouth-rehabilitation", "label": "Full Mouth Rehabilitation" },
+      { "id": "digital-dentistry-cadcam", "label": "Digital Dentistry / CAD-CAM" }
+    ]
+  },
+  {
+    "id": "orthodontics",
+    "label": "Orthodontics & Dentofacial Orthopedics",
+    "sub": [
+      { "id": "fixed-appliance", "label": "Fixed Appliance / Braces" },
+      { "id": "clear-aligners", "label": "Clear Aligner Therapy" },
+      { "id": "interceptive-orthodontics", "label": "Interceptive Orthodontics" },
+      { "id": "surgical-orthodontics", "label": "Surgical Orthodontics" },
+      { "id": "dentofacial-orthopedics", "label": "Dentofacial Orthopedics" },
+      { "id": "lingual-orthodontics", "label": "Lingual Orthodontics" }
+    ]
+  },
+  {
+    "id": "pediatric-dentistry",
+    "label": "Pediatric Dentistry",
+    "sub": [
+      { "id": "infant-oral-health", "label": "Infant Oral Health" },
+      { "id": "special-needs-dentistry", "label": "Special Needs Dentistry" },
+      { "id": "behavior-management", "label": "Behavior Management & Sedation" },
+      { "id": "pediatric-restorative", "label": "Pediatric Restorative Care" },
+      { "id": "pediatric-preventive", "label": "Preventive & Fluoride Therapy" }
+    ]
+  },
+  {
+    "id": "oral-maxillofacial-surgery",
+    "label": "Oral & Maxillofacial Surgery",
+    "sub": [
+      { "id": "dentoalveolar-surgery", "label": "Dentoalveolar Surgery / Extractions" },
+      { "id": "orthognathic-surgery", "label": "Orthognathic (Jaw) Surgery" },
+      { "id": "implant-surgery", "label": "Implant Surgery" },
+      { "id": "facial-trauma", "label": "Facial Trauma & Reconstruction" },
+      { "id": "head-neck-oncology", "label": "Head & Neck Oncologic Surgery" },
+      { "id": "cleft-craniofacial", "label": "Cleft Lip / Palate & Craniofacial Surgery" },
+      { "id": "tmj-surgery", "label": "TMJ Surgery" },
+      { "id": "cosmetic-facial-surgery", "label": "Cosmetic Facial Surgery" }
+    ]
+  },
+  {
+    "id": "oral-maxillofacial-pathology",
+    "label": "Oral & Maxillofacial Pathology",
+    "sub": [
+      { "id": "biopsy-diagnostics", "label": "Biopsy & Histopathologic Diagnosis" },
+      { "id": "oral-cancer-screening", "label": "Oral Cancer Screening" },
+      { "id": "forensic-odontology", "label": "Forensic Odontology" },
+      { "id": "oral-microbiology", "label": "Oral Microbiology & Immunology" }
+    ]
+  },
+  {
+    "id": "oral-maxillofacial-radiology",
+    "label": "Oral & Maxillofacial Radiology",
+    "sub": [
+      { "id": "cbct-imaging", "label": "CBCT / 3D Imaging" },
+      { "id": "panoramic-cephalometric", "label": "Panoramic & Cephalometric Imaging" },
+      { "id": "intraoral-radiography", "label": "Intraoral Radiography" },
+      { "id": "advanced-imaging", "label": "MRI / CT Interpretation" }
+    ]
+  },
+  {
+    "id": "oral-medicine",
+    "label": "Oral Medicine",
+    "sub": [
+      { "id": "oral-mucosal-disease", "label": "Oral Mucosal Disease" },
+      { "id": "salivary-gland-disorders", "label": "Salivary Gland Disorders" },
+      { "id": "medically-complex-patients", "label": "Care of Medically Complex Patients" },
+      { "id": "oral-oncology-support", "label": "Oral Complications of Cancer Therapy" }
+    ]
+  },
+  {
+    "id": "orofacial-pain",
+    "label": "Orofacial Pain",
+    "sub": [
+      { "id": "tmd", "label": "Temporomandibular Disorders (TMD)" },
+      { "id": "neuropathic-pain", "label": "Neuropathic Orofacial Pain" },
+      { "id": "headache-management", "label": "Headache & Migraine Management" },
+      { "id": "dental-sleep-medicine", "label": "Dental Sleep Medicine / Sleep Apnea" },
+      { "id": "bruxism-management", "label": "Bruxism & Occlusal Therapy" }
+    ]
+  },
+  {
+    "id": "dental-anesthesiology",
+    "label": "Dental Anesthesiology",
+    "sub": [
+      { "id": "local-anesthesia", "label": "Local Anesthesia" },
+      { "id": "conscious-sedation", "label": "Minimal & Moderate Sedation" },
+      { "id": "deep-sedation-ga", "label": "Deep Sedation & General Anesthesia" },
+      { "id": "pain-control-special-needs", "label": "Pain Control for Special Needs Patients" }
+    ]
+  },
+  {
+    "id": "dental-public-health",
+    "label": "Dental Public Health",
+    "sub": [
+      { "id": "community-dentistry", "label": "Community Dentistry" },
+      { "id": "epidemiology", "label": "Oral Health Epidemiology" },
+      { "id": "policy-program-management", "label": "Health Policy & Program Management" },
+      { "id": "preventive-programs", "label": "Population Preventive Programs" }
+    ]
+  }
+]

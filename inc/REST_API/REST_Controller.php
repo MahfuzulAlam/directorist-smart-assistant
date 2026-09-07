@@ -10,6 +10,8 @@ namespace DirectoristSmartAssistant\REST_API;
 use DirectoristSmartAssistant\Settings\Settings_Manager;
 use DirectoristSmartAssistant\Vector\Vector_Query;
 use DirectoristSmartAssistant\Vector\Vector_Sync;
+use DirectoristSmartAssistant\Triage\Triage_Client;
+use DirectoristSmartAssistant\Usage\Usage_Client;
 
 /**
  * REST API Controller class
@@ -270,6 +272,257 @@ class REST_Controller {
 				),
 			)
 		);
+
+		// Usage and cost for this website.
+		register_rest_route(
+			$this->namespace,
+			'/usage',
+			array(
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'get_usage' ),
+					'permission_callback' => array( $this, 'check_permission' ),
+					'args'                => array(
+						'days'    => array(
+							'type'     => 'integer',
+							'required' => false,
+							'default'  => 30,
+						),
+						'refresh' => array(
+							'type'     => 'boolean',
+							'required' => false,
+							'default'  => false,
+						),
+					),
+				),
+			)
+		);
+
+		// Symptom triage endpoint, used by the [symptom-based-search] shortcode.
+		register_rest_route(
+			$this->namespace,
+			'/triage',
+			array(
+				array(
+					'methods'             => 'POST',
+					'callback'            => array( $this, 'handle_triage' ),
+					'permission_callback' => '__return_true',
+					'args'                => array(
+						'session_id'  => array(
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_text_field',
+						),
+						'description' => array(
+							'type'              => 'string',
+							'required'          => true,
+							'sanitize_callback' => 'sanitize_textarea_field',
+						),
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * Usage and cost for this website, over the requested window.
+	 *
+	 * Cached briefly: usage totals do not move second to second, and the tab
+	 * re-reads them on every range change.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function get_usage( \WP_REST_Request $request ): \WP_REST_Response {
+		$days    = (int) $request->get_param( 'days' );
+		$refresh = (bool) $request->get_param( 'refresh' );
+
+		// 0 means all time; anything else is clamped to a sane window.
+		if ( $days < 0 ) {
+			$days = 30;
+		}
+
+		if ( $days > 365 ) {
+			$days = 365;
+		}
+
+		$start = '';
+		$end   = '';
+		$until = '';
+
+		if ( $days > 0 ) {
+			// Site-local dates: an admin reading "last 7 days" means their own
+			// days, not UTC's.
+			$now = current_datetime();
+
+			$start = $now->modify( '-' . ( $days - 1 ) . ' days' )->format( 'Y-m-d' );
+			$until = $now->format( 'Y-m-d' );
+
+			// The service treats end_date as midnight at the start of that day,
+			// so asking for "today" drops everything that happened today. Ask
+			// for tomorrow and report the window we actually meant.
+			$end = $now->modify( '+1 day' )->format( 'Y-m-d' );
+		}
+
+		// Scoped to the service + website in use, so switching either does not
+		// serve the previous one's cached totals.
+		$cache_key = 'dsa_usage_' . Usage_Client::get_instance()->get_cache_scope() . '_' . $days;
+
+		if ( ! $refresh ) {
+			$cached = get_transient( $cache_key );
+
+			if ( is_array( $cached ) ) {
+				$cached['cached'] = true;
+
+				return new \WP_REST_Response(
+					array(
+						'success' => true,
+						'data'    => $cached,
+					),
+					200
+				);
+			}
+		}
+
+		$result = Usage_Client::get_instance()->get_summary( $start, $end );
+
+		if ( is_wp_error( $result ) ) {
+			$data   = $result->get_error_data();
+			$status = is_array( $data ) && isset( $data['status'] ) ? (int) $data['status'] : 500;
+
+			return new \WP_REST_Response(
+				array(
+					'success' => false,
+					'code'    => $result->get_error_code(),
+					'message' => $result->get_error_message(),
+				),
+				$status
+			);
+		}
+
+		// Label the window we asked for; the service echoes its own boundaries
+		// in its local timezone, which reads a day out.
+		$result['range_start'] = $start;
+		$result['range_end']   = $until;
+
+		set_transient( $cache_key, $result, 5 * MINUTE_IN_SECONDS );
+
+		$result['cached'] = false;
+
+		return new \WP_REST_Response(
+			array(
+				'success' => true,
+				'data'    => $result,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Handle a symptom triage request.
+	 *
+	 * Public by design — visitors are not logged in — so it is throttled per IP
+	 * and the payload is bounded before anything reaches the upstream service.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return \WP_REST_Response
+	 */
+	public function handle_triage( \WP_REST_Request $request ): \WP_REST_Response {
+		$session_id  = (string) $request->get_param( 'session_id' );
+		$description = trim( (string) $request->get_param( 'description' ) );
+
+		// A client generated UUID; anything else is a malformed client.
+		if ( ! preg_match( '/^[a-f0-9-]{8,64}$/i', $session_id ) ) {
+			return new \WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Invalid session.', 'directorist-smart-assistant' ),
+				),
+				400
+			);
+		}
+
+		if ( mb_strlen( $description ) < 4 ) {
+			return new \WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Please describe the problem in a little more detail.', 'directorist-smart-assistant' ),
+				),
+				400
+			);
+		}
+
+		// The description carries the transcript plus the specialty vocabulary the
+		// model must choose from (~1,800 characters on its own), so the cap has
+		// to clear both — truncation trims the end, which is where that list sits.
+		$max_length = (int) apply_filters( 'directorist_smart_assistant_triage_max_length', 6000 );
+
+		if ( mb_strlen( $description ) > $max_length ) {
+			$description = mb_substr( $description, 0, $max_length );
+		}
+
+		if ( ! $this->allow_triage_request() ) {
+			return new \WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => __( 'Too many requests. Please wait a moment and try again.', 'directorist-smart-assistant' ),
+				),
+				429
+			);
+		}
+
+		$result = Triage_Client::get_instance()->triage( $session_id, $description );
+
+		if ( is_wp_error( $result ) ) {
+			$status = $result->get_error_data();
+			$status = is_array( $status ) && isset( $status['status'] ) ? (int) $status['status'] : 500;
+
+			return new \WP_REST_Response(
+				array(
+					'success' => false,
+					'message' => $result->get_error_message(),
+				),
+				$status
+			);
+		}
+
+		return new \WP_REST_Response(
+			array(
+				'success' => true,
+				'data'    => $result,
+			),
+			200
+		);
+	}
+
+	/**
+	 * Per-IP throttle for the public triage endpoint.
+	 *
+	 * @return bool True when the request may proceed.
+	 */
+	private function allow_triage_request(): bool {
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		$limit = (int) apply_filters( 'directorist_smart_assistant_triage_rate_limit', 20 );
+
+		if ( $limit <= 0 ) {
+			return true;
+		}
+
+		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$key = 'dsa_triage_rl_' . md5( $ip . '|' . wp_salt() );
+
+		$hits = (int) get_transient( $key );
+
+		if ( $hits >= $limit ) {
+			return false;
+		}
+
+		set_transient( $key, $hits + 1, HOUR_IN_SECONDS );
+
+		return true;
 	}
 
 	/**
@@ -365,6 +618,13 @@ class REST_Controller {
 		}
 		if ( isset( $params['chat_widget_color'] ) ) {
 			$settings['chat_widget_color'] = sanitize_text_field( $params['chat_widget_color'] );
+		}
+		if ( isset( $params['chat_widget_icon'] ) ) {
+			// Settings_Manager checks this against the known icon keys.
+			$settings['chat_widget_icon'] = sanitize_key( $params['chat_widget_icon'] );
+		}
+		if ( isset( $params['chat_widget_icon_url'] ) ) {
+			$settings['chat_widget_icon_url'] = esc_url_raw( $params['chat_widget_icon_url'] );
 		}
 
 		// Settings Manager handles API key encryption and preservation logic

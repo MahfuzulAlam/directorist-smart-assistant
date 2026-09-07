@@ -76,8 +76,8 @@ class Admin_Menu {
 	 */
 	public function render_admin_page(): void {
 		?>
-		<div class="wrap">
-			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+		<div class="wrap dsa-page">
+			<h1 class="screen-reader-text"><?php echo esc_html( get_admin_page_title() ); ?></h1>
 			<div id="directorist-smart-assistant-admin-root"></div>
 		</div>
 		<?php

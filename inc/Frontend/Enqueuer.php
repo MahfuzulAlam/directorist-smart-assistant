@@ -79,9 +79,11 @@ class Enqueuer {
 				'apiUrl' => rest_url( 'directorist-smart-assistant/v1/' ),
 				'nonce'  => wp_create_nonce( 'wp_rest' ),
 				'settings' => array(
-					'position' => $settings['chat_widget_position'] ?? 'bottom-right',
-					'color'    => $settings['chat_widget_color'] ?? '#667eea',
+					'position'  => $settings['chat_widget_position'] ?? 'bottom-right',
+					'color'     => $settings['chat_widget_color'] ?? '#667eea',
 					'agentName' => $settings['chat_agent_name'] ?? '',
+					'icon'      => $settings['chat_widget_icon'] ?? 'chat',
+					'iconUrl'   => $settings['chat_widget_icon_url'] ?? '',
 				),
 			)
 		);
